@@ -1,0 +1,8 @@
+multiagent_command:
+  rate: 100
+  agents_no: 5
+  topic_pre: /uavs/agent_
+  pose_topic_post: /command/pose
+  odom_topic_post: /uav_odometry/odometry
+  input_topic: /uavs/multiagent_command/pose
+  formation_topic: /uavs/formation_state

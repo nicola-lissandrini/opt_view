@@ -7,12 +7,12 @@
 
 
 	<xacro:macro name="widowx_arm_transmission" params="prefix namespace">
-		<transmission name="${namespace}/${prefix}_tran_1">
+		<transmission name="tran_1">
 			<type>transmission_interface/SimpleTransmission</type>
-			<joint name="${namespace}/${prefix}camera_joint">
+			<joint name="camera_joint">
 				<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
 			</joint>
-			<actuator name="${namespace}/${prefix)_motor1">
+			<actuator name="motor1">
 				<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
 				<mechanicalReduction>1</mechanicalReduction>
 			</actuator>

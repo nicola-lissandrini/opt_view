@@ -2,6 +2,7 @@
 
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="flying_camera">
 
+    <xacro:arg name="id" default="-1" />
 	<!-- Joints controller -->
 	<xacro:include filename="$(find opt_view)/gazebo/ros_control.urdf" />
 
@@ -12,7 +13,7 @@
 	<xacro:include filename="$(find rotors_description)/urdf/$(arg mav_name)_base.xacro" />
 
 	<xacro:camera_joint parent="${namespace}/base_link"
-		prefix="" namespace="${namespace}">
+		prefix="" namespace="">
 		<origin xyz="0 0.0 0" rpy="${pi} 0 0" />
 	</xacro:camera_joint>
 
@@ -29,7 +30,7 @@
     transform_topic="uav_odometry/transform"
     odometry_topic="uav_odometry/odometry"
     parent_frame_id="world"
-    child_frame_id="uav_odometry4"
+    child_frame_id="$(arg id)"
     mass_odometry_sensor="0.00001"
     measurement_divisor="1"
     measurement_delay="0"
