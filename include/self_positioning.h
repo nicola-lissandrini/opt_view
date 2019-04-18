@@ -20,10 +20,11 @@ class SelfPositioning
 	Formation targetFormation;
 	Formation computedFormation;
 	Formation currentFormation;
-	Forces forces;
+	Formation oldFormation;
 
 	struct Params {
 		int agentsNo;
+		double sampleTime;
 		double kg, dg, dk;
 	} params;
 
@@ -31,6 +32,8 @@ class SelfPositioning
 	Force computeRepulsiveForce (int i, int j);
 	void computeTrajectory ();
 	void initFormation (XmlRpc::XmlRpcValue &_params);
+
+	bool started;
 
 public:
 	SelfPositioning ();

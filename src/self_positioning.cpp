@@ -3,12 +3,15 @@
 using namespace std;
 using namespace Eigen;
 
-SelfPositioning::SelfPositioning ()
+SelfPositioning::SelfPositioning ():
+	started(false)
 {
 }
 
 void SelfPositioning::setParams (XmlRpc::XmlRpcValue &_params)
 {
+	double rate = paramDouble (_params["rate"]);
+	params.sampleTime = 1 / rate;
 	params.agentsNo = int (_params["agents_no"]);
 	params.kg = paramDouble (_params["const"]["kg"]);
 	params.dg = paramDouble (_params["const"]["dg"]);
@@ -42,7 +45,15 @@ int SelfPositioning::setFormationState (const Formation &formation)
 	if (formation.size () != currentFormation.size ())
 		return -1;
 
-	currentFormation = formation;
+	if (!started) {
+		started = true;
+		oldFormation = formation;
+		currentFormation = formation;
+	} else {
+		oldFormation = currentFormation;
+		currentFormation = formation;
+	}
+
 	return 0;
 }
 
@@ -53,9 +64,9 @@ void SelfPositioning::compute ()
 
 Force SelfPositioning::computeGoalForce (int i)
 {
-	Pose dist = currentFormation[i] * targetFormation[i].inverse ();
+	Pose dist = currentFormation[i].inverse() * targetFormation[i];
 
-	return params.kg * dist.translation () / dist.translation ().norm ();
+	return params.kg * dist.translation ();
 }
 
 
@@ -63,12 +74,16 @@ void SelfPositioning::computeTrajectory ()
 {
 	for (int i = 0; i < targetFormation.size (); i++) {
 		Force currFg = computeGoalForce (i);
-		Pose oldPose = currentFormation[i];
+		Pose currPose = currentFormation[i];
+		Pose oldPose = oldFormation[i];
+		Pose diff = currPose * oldPose.inverse ();
 		Pose newPose;
 
-		newPose = oldPose * Translation3d (currFg * params.dk);
+		newPose = currPose * Translation3d (currFg * params.dk + params.dg * diff.translation ());
 
-		cout << oldPose.translation ()<< "\n -- \n" << newPose.translation ()<< "\n\n +++++" << endl;
+		if (i == 0)
+			NODE_INFO ("len %lg", currFg.norm ());
+
 		computedFormation[i] = newPose;
 	}
 }

@@ -5,7 +5,7 @@ self_positioning:
   trajectory_pub: /uavs/multiagent_command/pose
   formation_sub: /uavs/formation_state
   const:
-    kg: 100.0
+    kg: 5.0
     dg: 1.0
     dk: 0.1
   initial_formation:
