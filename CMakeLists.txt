@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
     eigen_conversions)
 
+find_package(gazebo REQUIRED)
+
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 
@@ -22,6 +24,7 @@ include_directories(
  include
  ${catkin_INCLUDE_DIRS}
  ${EIGEN3_INCLUDE_DIR}
+ ${GAZEBO_INCLUDE_DIRS}
 )
 
 add_message_files(
@@ -36,7 +39,7 @@ generate_messages(
   geometry_msgs
 )
 
-catkin_package (CATKIN_DEPENDS message_runtime)
+catkin_package (CATKIN_DEPENDS message_runtime gazebo_ros)
 
 add_library (pd_lib SHARED src/pd_rosnode.cpp)
 target_link_libraries (pd_lib ${catkin_LIBRARIES})
@@ -50,5 +53,16 @@ add_executable (self_positioning src/self_positioning_node.cpp src/self_position
 target_link_libraries (self_positioning ${catkin_LIBRARIES} pd_lib)
 add_dependencies(self_positioning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+
+
+link_directories(${GAZEBO_LIBRARY_DIRS})
+add_library (target_trajectory SHARED src/target_trajectory.cpp)
+target_link_libraries (target_trajectory ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+add_dependencies(target_trajectory ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+link_directories(${GAZEBO_LIBRARY_DIRS})
+add_library (visibility_grid SHARED src/visibility_grid.cpp)
+target_link_libraries (visibility_grid ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
+add_dependencies(visibility_grid ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 

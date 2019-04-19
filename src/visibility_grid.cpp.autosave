@@ -1,0 +1,23 @@
+#include "visibility_grid.h"
+
+using namespace gazebo;
+using namespace gazebo::rendering;
+using namespace physics;
+using namespace ignition::math;
+using namespace ros;
+using namespace std;
+
+void VisibilityGrid::Load (VisualPtr _visual, sdf::ElementPtr _sdf)
+{
+	PlaneShape plane;
+	
+	_visual->
+	
+}
+
+void VisibilityGrid::UpdateChild ()
+{
+
+}
+
+GZ_REGISTER_MODEL_PLUGIN(VisibilityGrid)

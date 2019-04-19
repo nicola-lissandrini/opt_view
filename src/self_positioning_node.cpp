@@ -20,8 +20,8 @@ void SelfPositioningNode::initParams ()
 
 void SelfPositioningNode::initROS ()
 {
-	targetFormationSub = nh.subscribe (paramString (params["target_formation_sub"]), 1, &SelfPositioningNode::formationCallback, this);
-	targetFormationSub = nh.subscribe (paramString (params["formation_sub"]), 1, &SelfPositioningNode::formationStateCallback, this);
+	targetPoseSub = nh.subscribe (paramString (params["target_sub"]), 1, &SelfPositioningNode::targetCallback, this);
+	formationStateSub = nh.subscribe (paramString (params["formation_sub"]), 1, &SelfPositioningNode::formationStateCallback, this);
 
 	goalPub = nh.advertise<opt_view::MultiagentPose> (paramString (params["trajectory_pub"]), 100);
 }
@@ -60,18 +60,12 @@ void formationMsgToEigen (const opt_view::Formation &msg, Formation &eigenFormat
 	}
 }
 
-void SelfPositioningNode::formationCallback (const opt_view::Formation &newFormation)
+void SelfPositioningNode::targetCallback (const geometry_msgs::Pose &pose)
 {
-	Formation eigenFormation;
+	Pose eigenPose;
 
-	eigenFormation.resize (newFormation.formation.size ());
-	formationMsgToEigen (newFormation, eigenFormation);
-
-	if (selfPositioning.setTargetFormation (eigenFormation)){
-		ROS_ERROR ("Invalid formation length in msg. Skipping.");
-		return;
-	}
-
+	tf::poseMsgToEigen (pose, eigenPose);
+	selfPositioning.setTargetPose (eigenPose);
 }
 
 void SelfPositioningNode::formationStateCallback(const opt_view::Formation &newFormation)
@@ -82,8 +76,8 @@ void SelfPositioningNode::formationStateCallback(const opt_view::Formation &newF
 
 	formationMsgToEigen (newFormation, eigenFormation);
 
-	if (selfPositioning.setFormationState (eigenFormation)){
-		ROS_ERROR ("Invalid formation length in msg: %d. Skipping.", 	eigenFormation.size ());
+	if (selfPositioning.setFormationState (eigenFormation)) {
+		ROS_ERROR ("Invalid formation length in msg: %d. Skipping.", eigenFormation.size ());
 		return;
 	}
 

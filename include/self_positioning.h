@@ -13,25 +13,17 @@
 typedef Eigen::Affine3d Pose;
 typedef std::vector<Pose> Formation;
 typedef Eigen::Vector3d Force;
-typedef std::vector<Force> Forces;
+typedef std::vector<Eigen::Vector3d> Vectors;
 
 class SelfPositioning
 {
-	Formation targetFormation;
+	Pose targetPose;
 	Formation computedFormation;
 	Formation currentFormation;
-	Formation oldFormation;
+	Formation formationGeometry;
 
-	struct Params {
-		int agentsNo;
-		double sampleTime;
-		double kg, dg, dk;
-	} params;
+	int agentsNo;
 
-	Force computeGoalForce (int i);
-	Force computeRepulsiveForce (int i, int j);
-	void computeTrajectory ();
-	void initFormation (XmlRpc::XmlRpcValue &_params);
 
 	bool started;
 
@@ -39,7 +31,7 @@ public:
 	SelfPositioning ();
 
 	void setParams (XmlRpc::XmlRpcValue &_params);
-	int setTargetFormation (const Formation &formation);
+	void setTargetPose(const Pose &pose);
 	int setFormationState (const Formation &formation);
 
 	void compute ();
@@ -48,7 +40,7 @@ public:
 
 class SelfPositioningNode : public PdRosNode
 {
-	ros::Subscriber targetFormationSub;
+	ros::Subscriber targetPoseSub;
 	ros::Subscriber formationStateSub;
 	ros::Publisher goalPub;
 	SelfPositioning selfPositioning;
@@ -64,7 +56,7 @@ class SelfPositioningNode : public PdRosNode
 public:
 	SelfPositioningNode ();
 
-	void formationCallback (const opt_view::Formation &newFormation);
+	void targetCallback (const geometry_msgs::Pose &target);
 	void formationStateCallback (const opt_view::Formation &newFormation);
 };
 

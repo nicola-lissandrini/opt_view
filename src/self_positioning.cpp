@@ -10,34 +10,21 @@ SelfPositioning::SelfPositioning ():
 
 void SelfPositioning::setParams (XmlRpc::XmlRpcValue &_params)
 {
-	double rate = paramDouble (_params["rate"]);
-	params.sampleTime = 1 / rate;
-	params.agentsNo = int (_params["agents_no"]);
-	params.kg = paramDouble (_params["const"]["kg"]);
-	params.dg = paramDouble (_params["const"]["dg"]);
-	params.dk = paramDouble (_params["const"]["dk"]);
+	agentsNo = int (_params["agents_no"]);
 
-	targetFormation.resize (params.agentsNo);
-	computedFormation.resize (params.agentsNo);
-	currentFormation.resize (params.agentsNo);
+	computedFormation.resize (agentsNo);
+	currentFormation.resize (agentsNo);
+	formationGeometry.resize (agentsNo);
 
-	initFormation (_params);
-}
+	targetPose = Translation3d (Vector3d::Zero());
 
-void SelfPositioning::initFormation (XmlRpc::XmlRpcValue &_params)
-{
-	for (int i = 0; i < params.agentsNo; i++) {
-		targetFormation[i] = paramPoseEigen (_params["initial_formation"][i]);
+	for (int i = 0; i < agentsNo; i++) {
+		formationGeometry[i] = paramPoseEigen (_params["formation_geometry"][i]);
 	}
 }
 
-int SelfPositioning::setTargetFormation (const Formation &formation)
-{
-	if (formation.size () != targetFormation.size ())
-		return -1;
-
-	targetFormation = formation;
-	return 0;
+void SelfPositioning::setTargetPose (const Pose &pose) {
+	targetPose = pose;
 }
 
 int SelfPositioning::setFormationState (const Formation &formation)
@@ -47,46 +34,19 @@ int SelfPositioning::setFormationState (const Formation &formation)
 
 	if (!started) {
 		started = true;
-		oldFormation = formation;
-		currentFormation = formation;
-	} else {
-		oldFormation = currentFormation;
-		currentFormation = formation;
 	}
+
+	currentFormation = formation;
 
 	return 0;
 }
 
 void SelfPositioning::compute ()
 {
-	computeTrajectory ();
+	for (int i = 0; i < agentsNo; i++)
+		computedFormation[i] = targetPose * formationGeometry[i];
 }
 
-Force SelfPositioning::computeGoalForce (int i)
-{
-	Pose dist = currentFormation[i].inverse() * targetFormation[i];
-
-	return params.kg * dist.translation ();
-}
-
-
-void SelfPositioning::computeTrajectory ()
-{
-	for (int i = 0; i < targetFormation.size (); i++) {
-		Force currFg = computeGoalForce (i);
-		Pose currPose = currentFormation[i];
-		Pose oldPose = oldFormation[i];
-		Pose diff = currPose * oldPose.inverse ();
-		Pose newPose;
-
-		newPose = currPose * Translation3d (currFg * params.dk + params.dg * diff.translation ());
-
-		if (i == 0)
-			NODE_INFO ("len %lg", currFg.norm ());
-
-		computedFormation[i] = newPose;
-	}
-}
 
 Formation SelfPositioning::getComputedFormation () {
 	return computedFormation;

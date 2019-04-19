@@ -2,7 +2,6 @@
 
 <launch>
 	<arg name="mav_name" default="ardrone"/>
-	<arg name="world_name" default="basic"/>
 	<arg name="enable_logging" default="false" />
 	<arg name="enable_ground_truth" default="true" />
 	<arg name="log_file" default="$(arg mav_name)" />
@@ -13,7 +12,7 @@
 
 	<!-- Init Gazebo -->
 	<include file="$(find gazebo_ros)/launch/empty_world.launch">
-		<arg name="world_name" value="$(find rotors_gazebo)/worlds/$(arg world_name).world" />
+		<arg name="world_name" value="$(find rotors_gazebo)/worlds/basic.world" />
 		<arg name="debug" value="$(arg debug)" />
 		<arg name="paused" value="$(arg paused)" />
 		<arg name="gui" value="$(arg gui)" />
@@ -47,6 +46,28 @@
 
 		<rosparam command="load" file="$(find opt_view)/config/self_positioning.yaml" />
 		<node name="self_positioning" pkg="opt_view" type="self_positioning" output="screen" />
+
+		<param name="target_description" textfile="$(find opt_view)/robots/target.sdf" />
+
+		<node name="spawn_target" pkg="gazebo_ros" type="spawn_model"
+				args="-param target_description
+					  -sdf
+					  -x 1
+					  -y 0
+					  -z 0.5
+					  -model target"
+				respawn="false" output="screen" />
+
+		<param name="visibility_grid_description" textfile="$(find opt_view)/robots/visibility_grid.sdf" />
+
+		<node name="spawn_visibility_grid" pkg="gazebo_ros" type="spawn_model"
+				args="-param visibility_grid_description
+					  -sdf
+					  -x 1
+					  -y 0
+					  -z 0.5
+					  -model visibility_grid"
+				respawn="false" output="screen" />
 	</group>
 
 	<node pkg="rviz" name="rviz" type="rviz" args="-d $(find opt_view)/config/view.rviz" />

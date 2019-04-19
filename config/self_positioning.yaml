@@ -1,27 +1,14 @@
 self_positioning:
   rate: 50
   agents_no: 5
-  target_formation_sub: /uavs/target_formation
+  target_sub: /target/pose
   trajectory_pub: /uavs/multiagent_command/pose
   formation_sub: /uavs/formation_state
-  const:
-    kg: 5.0
-    dg: 1.0
-    dk: 0.1
-  initial_formation:
+  formation_geometry:
     - pos:
-        x: 0.0
+        x: -1.0
         y: 0.0
-        z: 1.0
-      rot:
-        x: 0.0
-        y: 0.0
-        z: 0.0
-        w: 1.0
-    - pos:
-        x: 1.0
-        y: 0.0
-        z: 1.0
+        z: 2.0
       rot:
         x: 0.0
         y: 0.0
@@ -29,26 +16,35 @@ self_positioning:
         w: 1.0
     - pos:
         x: -1.0
-        y: 0.0
-        z: 1.0
+        y: 1.0
+        z: 2.0
       rot:
         x: 0.0
         y: 0.0
         z: 0.0
         w: 1.0
     - pos:
-        x: 2.0
-        y: 0.0
-        z: 1.0
+        x: -1.0
+        y: -1.0
+        z: 2.0
       rot:
         x: 0.0
         y: 0.0
         z: 0.0
         w: 1.0
     - pos:
-        x: -2.0
+        x: -1.0
+        y: 2.0
+        z: 2.0
+      rot:
+        x: 0.0
         y: 0.0
-        z: 1.0
+        z: 0.0
+        w: 1.0
+    - pos:
+        x: -1.0
+        y: -2.0
+        z: 2.0
       rot:
         x: 0.0
         y: 0.0
