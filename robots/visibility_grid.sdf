@@ -4,14 +4,15 @@
     <static>true</static>
     <link name="visibility_grid_link">
       <visual name="visibility_grid_visual">
-        
+
         <geometry>
           <box>
-            <size>1 1 1</size>
+            <size>0.01 0.01 0.01</size>
           </box>
         </geometry>
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so" />
       </visual>
+        
     </link>
+    <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so" />
   </model>
 </sdf>
