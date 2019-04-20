@@ -5,6 +5,7 @@ using namespace gazebo::rendering;
 using namespace physics;
 using namespace ignition::math;
 using namespace std;
+using namespace ros;
 
 #define CELL_SIZE 0.1
 #define EDGE_SIZE 0.0008
@@ -20,22 +21,51 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 	node->Init ();
 	visPub = node->Advertise<msgs::Visual> ("~/visual",1000);
 
-	cellVisual = new CellVisual (node, visPub);
+	cellMatrix = new CellMatrix (100, 100, 0, 0,_model->GetScopedName (), node, visPub);
+	cellMatrix->build (CELL_SIZE);
 
-	cellVisual->build (0, CELL_SIZE, EDGE_SIZE);
+	if (!ros::isInitialized ())
+	{
+		int argc = 0;
+		char **argv = NULL;
+		ros::init (argc, argv, "visibility_grid");
+	}
+
+	rosNode = new NodeHandle ("visibility_grid");
+	rosNode->setCallbackQueue (&rosQueue);
+	SubscribeOptions so =
+			SubscribeOptions::create<std_msgs::Empty> ("update_visibility_matrix", 1,
+																  boost::bind(&VisibilityGrid::updateMatrix, this, _1),
+																  ros::VoidPtr(), &rosQueue);
+
+	rosSub = rosNode->subscribe (so);
+	rosQueueThread = thread (bind (&VisibilityGrid::queueThread, this));
 
 	updateConnection = event::Events::ConnectRender (
 				boost::bind(&VisibilityGrid::UpdateChild, this));
 }
 
-
-void VisibilityGrid::UpdateChild ()
+void VisibilityGrid::updateMatrix (const std_msgs::EmptyConstPtr &empty)
 {
+	std_msgs::Float64MultiArray visibilityMatrix;
+
 	common::Time tt = model->GetWorld ()->SimTime ();
 	double t = tt.Double ();
 
-	cellVisual->updatePose (Pose3d (t*0.1, 0, 0, 0,0,0));
-	cellVisual->redraw ();
+	cellMatrix->updatePose (Pose3d (t*0.1, 0, 0, 0,0,0));
+}
+
+
+void VisibilityGrid::UpdateChild ()
+{
+
+}
+
+void VisibilityGrid::queueThread () {
+	static const double timeout = 0.01;
+	while (rosNode->ok ()) {
+		rosQueue.callAvailable (WallDuration(timeout));
+	}
 }
 
 void CellVisual::build (int _id, double _cellSize, double _edgeSize)
@@ -65,6 +95,8 @@ void CellVisual::setId(int _id)
 
 void CellVisual::buildPlane (const Color &ambientColor, const Color &emitColor)
 {
+	plane.set_parent_name (parentName);
+
 	msgs::Geometry *geomMsg = plane.mutable_geometry ();
 	geomMsg->set_type (msgs::Geometry::PLANE);
 	geomMsg->mutable_plane ()->mutable_size ()->set_x (CELL_SIZE);
@@ -82,8 +114,9 @@ void CellVisual::buildPlane (const Color &ambientColor, const Color &emitColor)
 
 void CellVisual::buildEdge1 (const Color &ambientColor, const Color &emitColor)
 {
-	msgs::Geometry *edgesGeom = edge1.mutable_geometry ();
+	edge1.set_parent_name (parentName);
 
+	msgs::Geometry *edgesGeom = edge1.mutable_geometry ();
 	edgesGeom->set_type (msgs::Geometry::POLYLINE);
 	msgs::Polyline *poly  = edgesGeom->add_polyline ();
 
@@ -105,6 +138,8 @@ void CellVisual::buildEdge1 (const Color &ambientColor, const Color &emitColor)
 
 void CellVisual::buildEdge2 (const Color &ambientColor, const Color &emitColor)
 {
+	edge2.set_parent_name (parentName);
+
 	msgs::Geometry *edgesGeom = edge2.mutable_geometry ();
 
 	edgesGeom->set_type (msgs::Geometry::POLYLINE);
@@ -125,11 +160,17 @@ void CellVisual::buildEdge2 (const Color &ambientColor, const Color &emitColor)
 	msgs::Set (edge2.mutable_material ()->mutable_emissive (), emitColor);
 }
 
+CellVisual::CellVisual(const string &_parentName, transport::NodePtr _node, transport::PublisherPtr _visPub):
+	parentName(_parentName),
+	node(_node),
+	visPub(_visPub)
+{}
+
 void CellVisual::redraw ()
 {
 	visPub->Publish (plane);
-	visPub->Publish (edge1);
-	visPub->Publish (edge2);
+	//visPub->Publish (edge1);
+	//visPub->Publish (edge2);
 }
 
 void CellVisual::updatePose (const Pose3d &pose)
@@ -143,25 +184,35 @@ Vector3d CellMatrix::cellMap (int i, int j) {
 	return Vector3d (xM + double (i) * cellSize, yM + double (j) * cellSize, 0);
 }
 
-void CellMatrix::build (double _cellSize, const string &parentName)
+void CellMatrix::build (double _cellSize)
 {
 	cells.resize (rows * cols);
 
 	cellSize = _cellSize;
 
-	for (int i = 0; i < rows; i++) {
+	for (int i = 0; i < rows; i++) 	{
 		for (int j = 0; j < cols; j++) {
-			CellVisual *curr = new CellVisual (node, visPub);
-			Vector3d currPos = cellMap (i, j);
+			CellVisual *curr = new CellVisual (parentName, node, visPub);
 
 			curr->build (cols*i + j, cellSize, EDGE_SIZE);
-			curr->updatePose (Pose3d (currPos, Quaterniond::Identity));
+			cells[cols*i + j] = curr;
+		}
+}
+
+	updatePose (Pose3d ());
+}
+
+void CellMatrix::updatePose (const Pose3d &pose)
+{
+	for (int i = 0; i < rows; i++) 	{
+		for (int j = 0; j < cols; j++) {
+			Vector3d currPos = cellMap (i, j);
+			CellVisual *curr = cells[i*cols + j];
+
+			curr->updatePose (pose * Pose3d (currPos, Quaterniond::Identity));
 			curr->redraw ();
 		}
 	}
-
-
-
 }
 
 GZ_REGISTER_MODEL_PLUGIN(VisibilityGrid)

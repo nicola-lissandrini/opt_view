@@ -31,6 +31,7 @@ add_message_files(
 	FILES
 	MultiagentPose.msg
 	Formation.msg
+	ProjectedView.msg
 )
 
 generate_messages(

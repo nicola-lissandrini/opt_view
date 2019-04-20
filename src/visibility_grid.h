@@ -5,6 +5,8 @@
 #include <gazebo/physics/physics.hh>
 #include <gazebo/physics/Model.hh>
 #include <gazebo/rendering/Visual.hh>
+#include <std_msgs/Empty.h>
+#include <std_msgs/Float64MultiArray.h>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -19,6 +21,7 @@ class CellVisual
 	transport::NodePtr node;
 	transport::PublisherPtr visPub;
 	msgs::Visual plane, edge1, edge2;
+	std::string parentName;
 
 	double cellSize;
 	double edgeSize;
@@ -29,12 +32,8 @@ class CellVisual
 	void buildEdge1 (const ignition::math::Color &ambientColor, const ignition::math::Color &emitColor);
 	void buildEdge2 (const ignition::math::Color &ambientColor, const ignition::math::Color &emitColor);
 
-
 public:
-	CellVisual (transport::NodePtr _node, transport::PublisherPtr _visPub):
-		node(_node),
-		visPub(_visPub)
-	{}
+	CellVisual (const std::string &parentName, transport::NodePtr _node, transport::PublisherPtr _visPub);
 
 	void build (int _id, double _cellSize, double _edgeSize);
 	void updatePose (const ignition::math::Pose3d &pose);
@@ -46,6 +45,8 @@ class CellMatrix
 	transport::NodePtr node;
 	transport::PublisherPtr visPub;
 	std::vector<CellVisual*> cells;
+	std::string parentName;
+	ignition::math::Pose3d basePose;
 	int rows, cols;
 	double xM, yM, cellSize;
 
@@ -53,7 +54,8 @@ class CellMatrix
 
 public:
 	CellMatrix (int _rows, int _cols, double _xM, double _yM,
-				transport::NodePtr _node, transport::PublisherPtr _visPub):
+				const std::string &_parentName, transport::NodePtr _node, transport::PublisherPtr _visPub):
+		parentName(_parentName),
 		node(_node),
 		visPub(_visPub),
 		cells(_rows*_cols),
@@ -62,7 +64,8 @@ public:
 		xM(_xM), yM(_yM)
 	{}
 
-	void build (double cellSize, const std::string &parentName);
+	void build (double cellSize);
+	void updatePose(const ignition::math::Pose3d &pose);
 
 	CellVisual &operator() (int i, int j) {
 		assert (cols*i + j < cells.size ());
@@ -81,9 +84,11 @@ class VisibilityGrid : public ModelPlugin
 	physics::ModelPtr model;
 	event::ConnectionPtr updateConnection;
 
-	CellVisual *cellVisual;
+	CellMatrix *cellMatrix;
 
 	void publishAll ();
+
+	void queueThread ();
 
 protected:
 	virtual void UpdateChild ();
@@ -94,6 +99,8 @@ public:
 	{}
 
 	void Load (physics::ModelPtr _model, sdf::ElementPtr _sdf);
+
+	void updateMatrix (const opt_view::ProjectedViewConstPtr &projectedView);
 };
 
 }
