@@ -23,7 +23,7 @@ class ProjectedViewVisual
 	transport::PublisherPtr visPub;
 	std::string parentName;
 	msgs::Visual visualMsg;
-	ignition::math::Pose3d cameraFrame;
+	ignition::math::Pose3d projectedPose;
 	opt_view::ProjectedView viewPoints;
 
 	void build ();

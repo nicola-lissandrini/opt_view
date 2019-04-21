@@ -1,0 +1,5 @@
+backprojection:
+  rate: 100
+  topic_pre:  /uavs/agent_
+  camera_info_post: /camera1/camera_info
+  projected_view_post: /predicted_view/update

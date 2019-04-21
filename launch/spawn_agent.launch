@@ -56,5 +56,11 @@
       <rosparam command="load" file="$(find rotors_gazebo)/resource/$(arg mav_name).yaml" />
       <remap from="odometry" to="uav_odometry/odometry" />
     </node>
+
+    <rosparam file="$(find opt_view)/config/backprojection.yaml" command="load" />
+
+    <param name="backprojection/agent_id" type="string" value="$(arg id)" />
+
+    <node name="backprojection_$(arg id)" pkg="opt_view" type="backprojection" output="screen" />
   </group>
 </launch>

@@ -54,6 +54,10 @@ add_executable (self_positioning src/self_positioning_node.cpp src/self_position
 target_link_libraries (self_positioning ${catkin_LIBRARIES} pd_lib)
 add_dependencies(self_positioning ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+add_executable (backprojection src/backprojection_node.cpp)
+target_link_libraries (backprojection ${catkin_LIBRARIES} pd_lib)
+add_dependencies(backprojection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 
 link_directories(${GAZEBO_LIBRARY_DIRS})

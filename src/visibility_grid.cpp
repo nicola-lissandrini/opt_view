@@ -15,11 +15,11 @@ using namespace ros;
 
 void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 {
-	string matrixTopic("update"), odometryTopic;
+	string projectedViewTopic("update"), odometryTopic;
 	model = _model;	
 
-	if (_sdf->HasElement ("matrix_topic"))
-		matrixTopic = _sdf->GetElement ("matrix_topic")->Get<string> ();
+	if (_sdf->HasElement ("projected_view_topic"))
+		projectedViewTopic = _sdf->GetElement ("projected_view_topic")->Get<string> ();
 	if (!_sdf->HasElement ("camera_odom_topic")) {
 		gzerr << "VisiblityGrid: must specify camera_odom_topic" << endl;
 		return;
@@ -44,7 +44,7 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 	rosNode = new NodeHandle ("visibility_grid");
 	rosNode->setCallbackQueue (&rosQueue);
 	SubscribeOptions matrixSubSo =
-			SubscribeOptions::create<opt_view::ProjectedView> (matrixTopic, 1,
+			SubscribeOptions::create<opt_view::ProjectedView> (projectedViewTopic, 1,
 																  boost::bind(&VisibilityGrid::updateMatrix, this, _1),
 																  ros::VoidPtr(), &rosQueue);
 	SubscribeOptions poseSubSo =
@@ -58,6 +58,8 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 
 	updateConnection = event::Events::ConnectRender (
 				boost::bind(&VisibilityGrid::UpdateChild, this));
+
+	ROS_INFO ("Saluti da %s", projectedViewTopic.c_str ());
 }
 
 void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
@@ -71,6 +73,7 @@ void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
 						   odom->pose.pose.orientation.x,
 						   odom->pose.pose.orientation.y,
 						   odom->pose.pose.orientation.z));
+
 	projectedViewVisual->updatePose (pose);
 }
 
@@ -119,8 +122,16 @@ void ProjectedViewVisual::updatePoints (const opt_view::ProjectedView &view) {
 	viewPoints = view;
 }
 
-void ProjectedViewVisual::updatePose (const Pose3d &newPose) {
-	cameraFrame = newPose;
+void ProjectedViewVisual::updatePose (const Pose3d &newPose)
+{
+	Vector3d eul;
+
+	eul = newPose.Rot ().Euler ();
+
+	projectedPose = Pose3d (newPose.Pos ().X (),
+							newPose.Pos ().Y (),
+							0,
+							0, 0, eul.Z ());
 }
 
 void ProjectedViewVisual::redraw ()
@@ -132,7 +143,7 @@ void ProjectedViewVisual::redraw ()
 		pointCameraFrame = Vector3d (viewPoints.points[i].x, viewPoints.points[i].y,0);
 
 		msgs::Set (poly->mutable_point (i), Vector2d (pointCameraFrame.X (), pointCameraFrame.Y ()));
-		msgs::Set (visualMsg.mutable_pose (), cameraFrame);
+		msgs::Set (visualMsg.mutable_pose (), projectedPose);
 	}
 
 	visPub->Publish (visualMsg);

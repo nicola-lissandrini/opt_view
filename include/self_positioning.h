@@ -4,13 +4,12 @@
 #include <tf/tf.h>
 #include <opt_view/Formation.h>
 #include <opt_view/MultiagentPose.h>
-#include <Eigen/Geometry>
 #include <eigen_conversions/eigen_msg.h>
 
 #define NODE_NAME "self_positioning"
 #include "pd_rosnode.h"
+#include "common.h"
 
-typedef Eigen::Affine3d Pose;
 typedef std::vector<Pose> Formation;
 typedef Eigen::Vector3d Force;
 typedef std::vector<Eigen::Vector3d> Vectors;
@@ -23,8 +22,6 @@ class SelfPositioning
 	Formation formationGeometry;
 
 	int agentsNo;
-
-
 	bool started;
 
 public:
