@@ -21,8 +21,9 @@ class ProjectedViewVisual
 	transport::NodePtr node;
 	transport::PublisherPtr visPub;
 	std::string parentName;
-	msgs::Visual viewVisual;
+	msgs::Visual visualMsg;
 	ignition::math::Pose3d cameraFrame;
+	opt_view::ProjectedView viewPoints;
 
 	void build ();
 
@@ -32,7 +33,9 @@ public:
 		parentName(_parentName),
 		node(_node),
 		visPub(_visPub)
-	{}
+	{
+		build ();
+	}
 
 	void updatePoints (const opt_view::ProjectedView &view);
 	void updatePose (const ignition::math::Pose3d &newPose);
