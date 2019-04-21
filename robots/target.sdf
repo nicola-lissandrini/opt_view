@@ -53,11 +53,9 @@
 		</plugin>
 		<plugin name="target_trajectory" filename="libtarget_trajectory.so">
 			<link>target_base_link</link>
-			<initial_position x="1" y="0" z="0" />
-			<speed>0.0</speed>
-			<amplitude>0.5</amplitude>
-			<frequency>0.4</frequency>
-			<delay>10</delay>
+			<trajectory sample_time="0.01">
+				<filename>/home/nicola/psc_ws/trajectory</filename>
+			</trajectory>
 		</plugin>
 	</model>
 </sdf>

@@ -11,12 +11,28 @@
 #include <ros/callback_queue.h>
 #include <ros/subscribe_options.h>
 #include <thread>
+#include <Eigen/Dense>
 
 #define NODE_NAME "target_trajectory"
 #include "pd_rosnode.h"
 
 namespace gazebo {
 
+class Trajectory
+{
+	std::vector<ignition::math::Vector2d> points;
+	double sampleTime;
+
+public:
+	Trajectory ():
+		sampleTime(1)
+	{}
+
+	void poulateFromCsv (const std::string &filename);
+	void setSampleTime (double _sampleTime);
+	ignition::math::Vector2d get (double t);
+	double maxT ();
+};
 
 class TargetTrajectory : public ModelPlugin
 {
@@ -25,20 +41,7 @@ class TargetTrajectory : public ModelPlugin
 	physics::LinkPtr link;
 	event::ConnectionPtr updateConnection;
 
-	struct Params {
-		double speed;
-		double amplitude;
-		double frequency;
-		double delay;
-		ignition::math::Vector3d initialPosition;
-
-		Params ():
-			speed(1),
-			amplitude(1),
-			frequency(1),
-			delay(0)
-		{}
-	} params;
+	Trajectory traj;
 
 public:
 	TargetTrajectory ():

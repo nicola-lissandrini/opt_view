@@ -1,0 +1,40 @@
+%% Target trajectory generation
+
+clearvars
+
+%% Pars
+
+sample_time = 0.01;
+end_time = 30;
+
+A1 = 1;
+A2 = 4;
+f1 = 1;
+f2 = 0.5;
+v = 1;
+
+%% Trajectory
+
+% Still part
+
+t1 = 0:sample_time:10;
+
+traj1(:,1) = 0 * t1;
+traj2(:,2) = 0 * t1;
+
+% Linear part
+
+t2 = 0:sample_time:5;
+
+traj1(:,1) = v * t2;
+traj2(:,2) = 0 * t2;
+
+% First evasion
+
+t3 = 0:sample_time:
+
+
+
+
+
+

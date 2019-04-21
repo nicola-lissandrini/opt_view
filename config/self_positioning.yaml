@@ -7,7 +7,7 @@ self_positioning:
   angle_sub: /uavs/formation/update
   formation_geometry:
     - pos:
-        x: -1.0
+        x: -2.0
         y: 0.0
         z: 2.0
       rot:
@@ -16,7 +16,7 @@ self_positioning:
         z: 0.0
         w: 1.0
     - pos:
-        x: -1.0
+        x: -2.0
         y: 1.0
         z: 2.0
       rot:
@@ -25,7 +25,7 @@ self_positioning:
         z: 0.0
         w: 1.0
     - pos:
-        x: -1.0
+        x: -2.0
         y: -1.0
         z: 2.0
       rot:
@@ -34,7 +34,7 @@ self_positioning:
         z: 0.0
         w: 1.0
     - pos:
-        x: -1.0
+        x: -2.0
         y: 2.0
         z: 2.0
       rot:
@@ -43,7 +43,7 @@ self_positioning:
         z: 0.0
         w: 1.0
     - pos:
-        x: -1.0
+        x: -2.0
         y: -2.0
         z: 2.0
       rot:

@@ -3,10 +3,10 @@ visibility_matrix_builder:
   publish_rviz: false
   cell_size: 0.2
   global_region:
-    x_min: -10
-    x_max: 30
-    y_min: -10
-    y_max: 10
+    x_min: -20
+    x_max: 50
+    y_min: -20
+    y_max: 20
   local_region:
     x_min: -5
     x_max: 5
