@@ -8,6 +8,7 @@
 #include <std_msgs/Empty.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <opt_view/ProjectedView.h>
+#include <nav_msgs/Odometry.h>
 
 #include <ros/ros.h>
 #include <ros/callback_queue.h>
@@ -48,7 +49,8 @@ class VisibilityGrid : public ModelPlugin
 	transport::PublisherPtr visPub;
 	ros::NodeHandle *rosNode;
 	ros::CallbackQueue rosQueue;
-	ros::Subscriber rosSub;
+	ros::Subscriber matrixSub;
+	ros::Subscriber poseSub;
 	std::thread rosQueueThread;
 	physics::ModelPtr model;
 	event::ConnectionPtr updateConnection;
@@ -70,6 +72,7 @@ public:
 	void Load (physics::ModelPtr _model, sdf::ElementPtr _sdf);
 
 	void updateMatrix (const opt_view::ProjectedViewConstPtr &projectedView);
+	void odometryCallback (const nav_msgs::OdometryConstPtr &odom);
 };
 
 }

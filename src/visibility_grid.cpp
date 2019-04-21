@@ -15,7 +15,16 @@ using namespace ros;
 
 void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 {
-	model = _model;
+	string matrixTopic("update"), odometryTopic;
+	model = _model;	
+
+	if (_sdf->HasElement ("matrix_topic"))
+		matrixTopic = _sdf->GetElement ("matrix_topic")->Get<string> ();
+	if (!_sdf->HasElement ("camera_odom_topic")) {
+		gzerr << "VisiblityGrid: must specify camera_odom_topic" << endl;
+		return;
+	}
+	odometryTopic = _sdf->GetElement ("camera_odom_topic")->Get<string> ();
 
 	node = transport::NodePtr (new transport::Node());
 	node->Init ();
@@ -23,6 +32,7 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 
 	projectedViewVisual = new ProjectedViewVisual (_model->GetScopedName (),
 												   node, visPub);
+
 
 	if (!ros::isInitialized ())
 	{
@@ -33,41 +43,43 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 
 	rosNode = new NodeHandle ("visibility_grid");
 	rosNode->setCallbackQueue (&rosQueue);
-	SubscribeOptions so =
-			SubscribeOptions::create<opt_view::ProjectedView> ("update_visibility_matrix", 1,
+	SubscribeOptions matrixSubSo =
+			SubscribeOptions::create<opt_view::ProjectedView> (matrixTopic, 1,
 																  boost::bind(&VisibilityGrid::updateMatrix, this, _1),
 																  ros::VoidPtr(), &rosQueue);
+	SubscribeOptions poseSubSo =
+			SubscribeOptions::create<nav_msgs::Odometry> (odometryTopic, 1,
+																  boost::bind(&VisibilityGrid::odometryCallback, this, _1),
+																  ros::VoidPtr(), &rosQueue);
 
-	rosSub = rosNode->subscribe (so);
+	matrixSub = rosNode->subscribe (matrixSubSo);
+	poseSub = rosNode->subscribe (poseSubSo);
 	rosQueueThread = thread (bind (&VisibilityGrid::queueThread, this));
 
 	updateConnection = event::Events::ConnectRender (
 				boost::bind(&VisibilityGrid::UpdateChild, this));
 }
 
+void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
+{
+	Pose3d pose;
+
+	pose.Set (Vector3d (odom->pose.pose.position.x,
+						odom->pose.pose.position.y,
+						odom->pose.pose.position.z),
+			  Quaterniond (odom->pose.pose.orientation.w,
+						   odom->pose.pose.orientation.x,
+						   odom->pose.pose.orientation.y,
+						   odom->pose.pose.orientation.z));
+	projectedViewVisual->updatePose (pose);
+}
+
 void VisibilityGrid::updateMatrix (const opt_view::ProjectedViewConstPtr &projectedView)
 {
-	opt_view::ProjectedView fakeView;
 	common::Time tt = model->GetWorld ()->SimTime ();
 	double t = tt.Double ();
-	fakeView.points.resize (POINTS_NO);
 
-
-	fakeView.points[0].x = 0;
-	fakeView.points[0].y = 0;
-	fakeView.points[0].z = 0;
-	fakeView.points[1].x = 1;
-	fakeView.points[1].y = 0;
-	fakeView.points[1].z = 0;
-	fakeView.points[2].x = 1;
-	fakeView.points[2].y = 1;
-	fakeView.points[2].z = 0;
-	fakeView.points[3].x = 0;
-	fakeView.points[3].y = 1;
-	fakeView.points[3].z = 0;
-
-	projectedViewVisual->updatePoints (fakeView);
-	projectedViewVisual->updatePose (Pose3d (t*0.1, 0,0,0,0,0));
+	projectedViewVisual->updatePoints (*projectedView);
 
 	projectedViewVisual->redraw ();
 }
@@ -96,6 +108,11 @@ void ProjectedViewVisual::build ()
 	for (int i = 0; i < POINTS_NO; i++)
 		msgs::Set (poly->add_point (), Vector2d ());
 	poly->set_height (0.001);
+
+	Color colorInner(0,0,0,0.3), colorZero (0,0,0,0);
+	msgs::Set (visualMsg.mutable_material ()->mutable_ambient (), colorInner);
+	msgs::Set (visualMsg.mutable_material ()->mutable_diffuse (), colorInner);
+	msgs::Set (visualMsg.mutable_material ()->mutable_emissive (), colorZero);
 }
 
 void ProjectedViewVisual::updatePoints (const opt_view::ProjectedView &view) {

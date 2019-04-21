@@ -13,6 +13,8 @@
       </visual>
         
     </link>
-    <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so" />
+    <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <camera_odom_topic>/uavs/agent_0/uav_odometry/odometry</camera_odom_topic>
+    </plugin>
   </model>
 </sdf>
