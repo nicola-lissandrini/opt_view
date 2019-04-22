@@ -15,6 +15,8 @@
 #include <ros/callback_queue.h>
 #include <ros/subscribe_options.h>
 #include <thread>
+#include <semaphore.h>
+#include <errno.h>
 
 namespace gazebo {
 
@@ -25,36 +27,42 @@ class VisibilityGrid : public VisualPlugin
 	ros::Subscriber odomSub;
 	ros::Subscriber projViewSub;
 	ros::CallbackQueue rosQueue;
+	event::ConnectionPtr updateConnection;
 
 	std::thread rosQueueThread;
-	rendering::VisualPtr visualRoot, visualOld;
+	rendering::VisualPtr visualRoot;
+	rendering::VisualPtr visualNew;
+	uint visualOldId;
 	rendering::ScenePtr scene;
 
 	ignition::math::Pose3d cameraPose;
-	opt_view::ProjectedView projView;
+	std::vector<ignition::math::Vector3d> projPoints;
 
 	std::string id;
 	std::string projectedViewTopic, odometryTopic;
-	bool first;
+	bool first, newVisualAvailable;
+	int unique;
+	int count;
 
 	void initROS ();
-	void initVisual (rendering::VisualPtr &visual);
-	void addVisual (rendering::VisualPtr visual);
-	void removeVisual (rendering::VisualPtr visual);
-	inline std::string getVisualName () {
-		return "visual_proj_" + id;
-	}
+	inline std::string getVisualName ();
 
 	void redraw ();
-	msgs::Visual *visualMsgFromPoints (const std::vector<geometry_msgs::Point> &points);
+	msgs::Visual visualMsgFromPoints (const std::vector<ignition::math::Vector3d> &points);
+	std::vector<ignition::math::Vector3d> convertPoints (const std::vector<geometry_msgs::Point> &points);
 	bool processSDF(sdf::ElementPtr element);
+	void UpdateChild ();
 
 	void queueThread ();
+
+	// Gazebo bug related
+	sem_t *sem;
 
 public:
 	VisibilityGrid ():
 		VisualPlugin (),
-		first(true)
+		first(true), count(0),
+		newVisualAvailable(false)
 	{}
 
 	void Load (rendering::VisualPtr _visual, sdf::ElementPtr _sdf);

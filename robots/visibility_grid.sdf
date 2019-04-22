@@ -3,8 +3,8 @@
   <model name="visibility_grid">
     <static>true</static>
     <link name="visibility_grid_link_0">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_0">
+        <plugin name="visibility_grid_plugin_0" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_0/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_0/predicted_view/update</projected_view_topic>
           <id>0</id>
@@ -20,8 +20,8 @@
       </inertial>
     </link>
     <link name="visibility_grid_link_1">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_1">
+        <plugin name="visibility_grid_plugin_1" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_1/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_1/predicted_view/update</projected_view_topic>
           <id>1</id>
@@ -37,8 +37,8 @@
       </inertial>
     </link>
     <link name="visibility_grid_link_2">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_2">
+        <plugin name="visibility_grid_plugin_2" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_2/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_2/predicted_view/update</projected_view_topic>
           <id>2</id>
@@ -54,8 +54,8 @@
       </inertial>
     </link>
     <link name="visibility_grid_link_3">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_3">
+        <plugin name="visibility_grid_plugin_3" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_3/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_3/predicted_view/update</projected_view_topic>
           <id>3</id>
@@ -71,17 +71,25 @@
       </inertial>
     </link>
     <link name="visibility_grid_link_4">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_4">
+        <plugin name="visibility_grid_plugin_4" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_4/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_4/predicted_view/update</projected_view_topic>
           <id>4</id>
         </plugin>
+        <geometry>
+          <empty />
+        </geometry>
       </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.01" />
+        <inertia ixx="0.002" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.002" />
+      </inertial>
     </link>
     <link name="visibility_grid_link_5">
-      <visual name="camera_plugin_visual">
-        <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+      <visual name="camera_plugin_visual_5">
+        <plugin name="visibility_grid_plugin_5" filename="libvisibility_grid.so">
           <camera_odom_topic>/uavs/agent_5/camera_odometry/odometry</camera_odom_topic>
           <projected_view_topic>/uavs/agent_5/predicted_view/update</projected_view_topic>
           <id>5</id>

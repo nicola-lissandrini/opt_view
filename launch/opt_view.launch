@@ -70,5 +70,5 @@
 				respawn="false" output="screen" />
 	</group>
 
-	<node pkg="rviz" name="rviz" type="rviz" args="-d $(find opt_view)/config/view.rviz" />
+	<!--node pkg="rviz" name="rviz" type="rviz" args="-d $(find opt_view)/config/view.rviz" /-->
 </launch>

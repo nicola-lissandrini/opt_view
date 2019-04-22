@@ -36,7 +36,7 @@ void BackProjectionNode::cameraInfoCallback (const sensor_msgs::CameraInfo &came
 
 int BackProjectionNode::actions ()
 {
-	opt_view::ProjectedView temp;
+	opt_view::ProjectedView projView;
 
 	temp.points.resize (4);
 
