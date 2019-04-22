@@ -18,8 +18,6 @@ void VisibilityGrid::Load (VisualPtr _visual, sdf::ElementPtr _sdf)
 {
 	visual = _visual;
 
-	gzerr << "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl;
-
 	buildVisual ();
 
 	if (!ros::isInitialized ())
@@ -51,17 +49,34 @@ void VisibilityGrid::updateMatrix (const opt_view::ProjectedViewConstPtr &projec
 
 void VisibilityGrid::buildVisual ()
 {
-	VisualPtr nuova;
+	VisualPtr nuova, nuova2;
 	nuova.reset (new Visual ("visual_bella", visual->GetParent ()));
-	msgs::Visual visualMsg;
+	nuova2.reset (new Visual ("visual_bella2", visual->GetParent ()));
+	msgs::Visual visualMsg, visualMsg2;
 
 	visualMsg.set_name ("visualCiao");
 	visualMsg.set_parent_name (visual->GetScene ()->Name ());
+	visualMsg2.set_name ("visualCiao");
+	visualMsg2.set_parent_name (visual->GetScene ()->Name ());
 
-	visualMsg.mutable_geometry ()->set_type (msgs::Geometry::BOX);
-	msgs::Set (visualMsg.mutable_geometry ()->mutable_box ()->mutable_size (), Vector3d (1,1,1));
+	visualMsg.mutable_geometry ()->set_type (msgs::Geometry::POLYLINE);
+	msgs::Polyline *poly = visualMsg.mutable_geometry ()->add_polyline ();
+
+	visualMsg2.mutable_geometry ()->set_type (msgs::Geometry::POLYLINE);
+	msgs::Polyline *poly2 = visualMsg2.mutable_geometry ()->add_polyline ();
+
+	msgs::Set (poly->add_point (), Vector2d (0,0));
+	msgs::Set (poly->add_point (), Vector2d (0,1));
+	msgs::Set (poly->add_point (), Vector2d (1,1));
+	poly->set_height (1);
+
+	msgs::Set (poly2->add_point (), Vector2d (0,0));
+	msgs::Set (poly2->add_point (), Vector2d (0,1));
+	msgs::Set (poly2->add_point (), Vector2d (-1,-1));
+	poly2->set_height (1);
 
 	auto msgPtr = new ConstVisualPtr(&visualMsg);
+	auto msgPtr2 = new ConstVisualPtr(&visualMsg2);
 
 	nuova->LoadFromMsg (*msgPtr);
 	nuova->SetPose (Pose3d ());
@@ -71,6 +86,11 @@ void VisibilityGrid::buildVisual ()
 	sleep (5);
 
 	visual->GetScene ()->RemoveVisual (nuova);
+
+	nuova2->LoadFromMsg (*msgPtr2);
+	nuova2->SetPose (Pose3d ());
+	nuova2->SetVisible (true);
+	visual->GetScene ()->AddVisual (nuova2);
 
 
 
