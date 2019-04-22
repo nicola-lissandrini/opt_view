@@ -83,6 +83,7 @@
     <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
       <camera_odom_topic>/uavs/agent_$(arg id)/camera_odometry/odometry</camera_odom_topic>
       <projected_view_topic>/uavs/agent_$(arg id)/predicted_view/update</projected_view_topic>
+      <id>$(arg id)</id>
     </plugin>
   </gazebo>
 </robot>

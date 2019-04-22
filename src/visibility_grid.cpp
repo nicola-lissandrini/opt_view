@@ -1,6 +1,8 @@
 #include "visibility_grid.h"
 
 #include <tf/tf.h>
+#include <gazebo/transport/transport.hh>
+#include "pd_rosnode.h"
 
 using namespace gazebo;
 using namespace gazebo::rendering;
@@ -11,12 +13,10 @@ using namespace ros;
 
 #define POINTS_NO 4
 
-
-
 void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 {
-	string projectedViewTopic("update"), odometryTopic;
-	model = _model;	
+	string projectedViewTopic("update"), odometryTopic, id;
+	model = _model;
 
 	if (_sdf->HasElement ("projected_view_topic"))
 		projectedViewTopic = _sdf->GetElement ("projected_view_topic")->Get<string> ();
@@ -24,14 +24,21 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 		gzerr << "VisiblityGrid: must specify camera_odom_topic" << endl;
 		return;
 	}
+	if (!_sdf->HasElement ("id")) {
+		gzerr << "VisiblityGrid: must specify id" << endl;
+		return;
+	}
 	odometryTopic = _sdf->GetElement ("camera_odom_topic")->Get<string> ();
+	id = _sdf->GetElement ("id")->Get<string> ();
 
 	node = transport::NodePtr (new transport::Node());
 	node->Init ();
 	visPub = node->Advertise<msgs::Visual> ("~/visual",1000);
+	reqPub = node->Advertise<msgs::Request>("~/request");
 
-	projectedViewVisual = new ProjectedViewVisual (_model->GetScopedName (),
-												   node, visPub);
+	projectedViewVisual = new ProjectedViewVisual (_model->GetScopedName (),id,
+												   node, visPub, reqPub);
+
 
 
 	if (!ros::isInitialized ())
@@ -58,8 +65,6 @@ void VisibilityGrid::Load (ModelPtr _model, sdf::ElementPtr _sdf)
 
 	updateConnection = event::Events::ConnectRender (
 				boost::bind(&VisibilityGrid::UpdateChild, this));
-
-	ROS_INFO ("Saluti da %s", projectedViewTopic.c_str ());
 }
 
 void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
@@ -101,21 +106,7 @@ void VisibilityGrid::queueThread () {
 
 void ProjectedViewVisual::build ()
 {
-	visualMsg.set_parent_name (parentName);
-	visualMsg.set_name ((parentName + "/visual").c_str ());
 
-	msgs::Geometry *viewGeom = visualMsg.mutable_geometry ();
-	viewGeom->set_type (msgs::Geometry::POLYLINE);
-	msgs::Polyline *poly = viewGeom->add_polyline ();
-
-	for (int i = 0; i < POINTS_NO; i++)
-		msgs::Set (poly->add_point (), Vector2d ());
-	poly->set_height (0.001);
-
-	Color colorInner(0,0,0,0.3), colorZero (0,0,0,0);
-	msgs::Set (visualMsg.mutable_material ()->mutable_ambient (), colorInner);
-	msgs::Set (visualMsg.mutable_material ()->mutable_diffuse (), colorInner);
-	msgs::Set (visualMsg.mutable_material ()->mutable_emissive (), colorZero);
 }
 
 void ProjectedViewVisual::updatePoints (const opt_view::ProjectedView &view) {
@@ -124,29 +115,67 @@ void ProjectedViewVisual::updatePoints (const opt_view::ProjectedView &view) {
 
 void ProjectedViewVisual::updatePose (const Pose3d &newPose)
 {
-	Vector3d eul;
-
-	eul = newPose.Rot ().Euler ();
-
-	projectedPose = Pose3d (newPose.Pos ().X (),
-							newPose.Pos ().Y (),
-							0,
-							0, 0, eul.Z ());
+	cameraPose = newPose.Inverse ();
 }
 
 void ProjectedViewVisual::redraw ()
 {
-	Vector3d pointCameraFrame;
+	msgs::Visual *visualMsg = new msgs::Visual;
+
+	visualMsg->set_name (("visualMatrix" + id).c_str ());
+	visualMsg->set_parent_name (parentName);
+
+	visualMsg->clear_geometry ();
+	visualMsg->mutable_geometry ()->set_type (msgs::Geometry::BOX);
+	msgs::Set (visualMsg->mutable_geometry ()->mutable_box ()->mutable_size (), Vector3d (1,1,1));
+	visPub->Publish (*visualMsg);
+
+	visualMsg->set_delete_me (true);
+	visPub->WaitForConnection ();
+	visPub->Publish (*visualMsg);
+	visualMsg->set_delete_me (false);
+
+	Color colorInner(0,0,0,0.3), colorZero (0,0,0,0);
+	msgs::Set (visualMsg->mutable_material ()->mutable_ambient (), colorInner);
+	msgs::Set (visualMsg->mutable_material ()->mutable_diffuse (), colorInner);
+	msgs::Set (visualMsg->mutable_material ()->mutable_emissive (), colorZero);
+
+	Vector3d pointCameraFrame, pointWorldFrame;
+	msgs::Geometry *geom = visualMsg->mutable_geometry ();
+	geom->set_type (msgs::Geometry::POLYLINE);
+	msgs::Polyline *poly = geom->add_polyline ();
+	poly->set_height (0.001);
 
 	for (int i = 0; i < POINTS_NO; i++) {
-		msgs::Polyline *poly = visualMsg.mutable_geometry ()->mutable_polyline (0);
-		pointCameraFrame = Vector3d (viewPoints.points[i].x, viewPoints.points[i].y,0);
+		pointCameraFrame = Vector3d (viewPoints.points[i].x, viewPoints.points[i].y, viewPoints.points[i].z);
+		pointWorldFrame = cameraPose.Rot () * pointCameraFrame + cameraPose.Pos ();
 
-		msgs::Set (poly->mutable_point (i), Vector2d (pointCameraFrame.X (), pointCameraFrame.Y ()));
-		msgs::Set (visualMsg.mutable_pose (), projectedPose);
+		if (abs (pointWorldFrame.Z()) > 0.1) {
+	//		ROS_WARN ("Received point in world frame is not zero.");
+		}
+
+		msgs::Set (poly->add_point (), Vector2d (pointWorldFrame.X (), pointWorldFrame.Y ()));
+		//poly->mutable_point (i)->set_x (pointWorldFrame.X ());
+		//poly->mutable_point (i)->set_y (pointWorldFrame.Y ());
 	}
-
-	visPub->Publish (visualMsg);
+	b += 0.01;
+	a *= -1;
+	if (c > 0) {
+		oldMsg->mutable_geometry ()->set_type (msgs::Geometry::BOX);
+		oldMsg->set_delete_me (true);
+		visPub->WaitForConnection ();
+		visPub->Publish (*oldMsg);
+		usleep (100000);
+		gzerr << "Deleting " << oldMsg->name () << endl;
+	}
+	visPub->WaitForConnection ();
+	visPub->Publish (*visualMsg);
+	gzerr << "Creating " << visualMsg->name () << endl;
+	if (c > 0) {
+		delete oldMsg;
+	}
+	oldMsg = visualMsg;
+	c++;
 }
 
 GZ_REGISTER_MODEL_PLUGIN(VisibilityGrid)

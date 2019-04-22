@@ -20,20 +20,24 @@ namespace gazebo {
 class ProjectedViewVisual
 {
 	transport::NodePtr node;
-	transport::PublisherPtr visPub;
-	std::string parentName;
-	msgs::Visual visualMsg;
-	ignition::math::Pose3d projectedPose;
+	transport::PublisherPtr visPub, reqPub;
+	std::string parentName, id;
+	ignition::math::Pose3d cameraPose;
 	opt_view::ProjectedView viewPoints;
+	msgs::Visual *oldMsg;
+
+	double a,b;
+	int c;
 
 	void build ();
 
 public:
-	ProjectedViewVisual (const std::string &_parentName,
-						 transport::NodePtr _node, transport::PublisherPtr _visPub):
-		parentName(_parentName),
+	ProjectedViewVisual (const std::string &_parentName, const std::string &_id,
+						 transport::NodePtr _node, transport::PublisherPtr _visPub, transport::PublisherPtr _reqPub):
+		parentName(_parentName),id(_id),
 		node(_node),
-		visPub(_visPub)
+		visPub(_visPub), reqPub(_reqPub),
+		a(-0.1),b(0),c(0)
 	{
 		build ();
 	}
@@ -54,6 +58,7 @@ class VisibilityGrid : public ModelPlugin
 	std::thread rosQueueThread;
 	physics::ModelPtr model;
 	event::ConnectionPtr updateConnection;
+	transport::PublisherPtr reqPub;
 
 	ProjectedViewVisual *projectedViewVisual;
 
