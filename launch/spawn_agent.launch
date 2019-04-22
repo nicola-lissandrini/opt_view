@@ -59,8 +59,11 @@
 
     <rosparam file="$(find opt_view)/config/backprojection.yaml" command="load" />
 
-    <param name="backprojection/agent_id" type="string" value="$(arg id)" />
 
     <node name="backprojection_$(arg id)" pkg="opt_view" type="backprojection" output="screen" />
+      <param name="backprojection/agent_id" type="string" value="$(arg id)" />
+      <param name="backprojection/camera_info_topic" type="string" value="camera1/camera_info" />
+      <param name="backprojection/projected_view_topic" type="string" value="camera_odometry/odometry" />
+      <param name="backprojection/camera_odom_topic" type="string" value="predicted_view/update" />
   </group>
 </launch>
