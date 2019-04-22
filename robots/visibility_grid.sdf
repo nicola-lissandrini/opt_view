@@ -4,7 +4,9 @@
     <static>true</static>
     <link name="visibility_grid_link">
       <visual name="visibility_grid_visual">
-
+     <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
+          <camera_odom_topic>/uavs/agent_0/camera_odometry/odometry</camera_odom_topic>
+        </plugin>
         <geometry>
           <box>
             <size>0.01 0.01 0.01</size>
@@ -13,8 +15,6 @@
       </visual>
         
     </link>
-    <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
-      <camera_odom_topic>/uavs/agent_0/camera_odometry/odometry</camera_odom_topic>
-    </plugin>
+   
   </model>
 </sdf>

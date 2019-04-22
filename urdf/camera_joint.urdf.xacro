@@ -47,7 +47,7 @@
 			</inertial>
 		</link>
 		<link name="camera_plugin_link">
-			<visual>
+			<visual name="camera_plugin_visual">
 				<origin  xyz="0 0 0.01" rpy="0 0 0" />
 				<geometry>
 					<box size="0.0005 0.0005 0.0005" />
