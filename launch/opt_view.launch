@@ -58,7 +58,7 @@
 					  -model target"
 				respawn="false" output="screen" />
 
-		<!--param name="visibility_grid_description" textfile="$(find opt_view)/robots/visibility_grid.sdf" />
+		<param name="visibility_grid_description" textfile="$(find opt_view)/robots/visibility_grid.sdf" />
 
 		<node name="spawn_visibility_grid" pkg="gazebo_ros" type="spawn_model"
 				args="-param visibility_grid_description
@@ -67,7 +67,7 @@
 					  -y 0
 					  -z 0.5
 					  -model visibility_grid"
-				respawn="false" output="screen" /-->
+				respawn="false" output="screen" />
 	</group>
 
 	<node pkg="rviz" name="rviz" type="rviz" args="-d $(find opt_view)/config/view.rviz" />

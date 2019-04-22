@@ -13,7 +13,7 @@
 	<xacro:include filename="$(find rotors_description)/urdf/$(arg mav_name)_base.xacro" />
 
 	<xacro:camera_joint parent="${namespace}/base_link"
-		prefix="" namespace="">
+		prefix="" namespace="" id="$(arg id)">
 		<origin xyz="0 0.0 0" rpy="${pi} 0 0" />
 	</xacro:camera_joint>
 
@@ -75,15 +75,8 @@
     enable_odometry_map="false"
     odometry_map=""
     image_scale="">
-    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> <!-- [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] [kg m^2] -->
+    <inertia ixx="0.00001" ixy="0.0" ixz="0.0" iyy="0.00001" iyz="0.0" izz="0.00001" /> 
     <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
   </xacro:odometry_plugin_macro>
 
-  <gazebo reference="camera_plugin_visual">
-    <plugin name="visibility_grid_plugin" filename="libvisibility_grid.so">
-      <camera_odom_topic>/uavs/agent_$(arg id)/camera_odometry/odometry</camera_odom_topic>
-      <projected_view_topic>/uavs/agent_$(arg id)/predicted_view/update</projected_view_topic>
-      <id>$(arg id)</id>
-    </plugin>
-  </gazebo>
 </robot>

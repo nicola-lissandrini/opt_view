@@ -16,10 +16,37 @@ using namespace ros;
 
 void VisibilityGrid::Load (VisualPtr _visual, sdf::ElementPtr _sdf)
 {
-	visual = _visual;
+	visualRoot = _visual;
+	scene = _visual->GetScene ();
 
-	buildVisual ();
+	if (!processSDF (_sdf))
+		return;
 
+	initROS ();
+
+}
+
+bool VisibilityGrid::processSDF (sdf::ElementPtr element)
+{
+	id = element->GetElement ("id")->Get<string> ();
+
+	if (!element->HasElement ("camera_odom_topic")) {
+		gzerr << "visibility_grid_plugin: camera_odom_topic must be set" << endl;
+		return false;
+	}
+	if (!element->HasElement ("projected_view_topic")) {
+		gzerr << "visibility_grid_plugin: projected_view_topic must be set" << endl;
+		return false;
+	}
+
+	odometryTopic = element->GetElement ("camera_odom_topic")->Get<string> ();
+	projectedViewTopic = element->GetElement ("projected_view_topic")->Get<string> ();
+
+	return true;
+}
+
+void VisibilityGrid::initROS ()
+{
 	if (!ros::isInitialized ())
 	{
 		int argc = 0;
@@ -29,25 +56,165 @@ void VisibilityGrid::Load (VisualPtr _visual, sdf::ElementPtr _sdf)
 
 	rosNode = new NodeHandle ("visibility_grid");
 	rosNode->setCallbackQueue (&rosQueue);
-	SubscribeOptions matrixSubSo =
-			SubscribeOptions::create<opt_view::ProjectedView> ("projectedViewTopic", 1,
+	SubscribeOptions projViewSubSo =
+			SubscribeOptions::create<opt_view::ProjectedView> (projectedViewTopic, 1,
 																  boost::bind(&VisibilityGrid::updateMatrix, this, _1),
 																  ros::VoidPtr(), &rosQueue);
-	SubscribeOptions poseSubSo =
-			SubscribeOptions::create<nav_msgs::Odometry> ("odometryTopic", 1,
+	SubscribeOptions odomSubSo =
+			SubscribeOptions::create<nav_msgs::Odometry> (odometryTopic, 1,
 																  boost::bind(&VisibilityGrid::odometryCallback, this, _1),
 																  ros::VoidPtr(), &rosQueue);
 
-	matrixSub = rosNode->subscribe (matrixSubSo);
-	poseSub = rosNode->subscribe (poseSubSo);
-	rosQueueThread = thread (bind (&VisibilityGrid::queueThread, this));
+	odomSub = rosNode->subscribe (odomSubSo);
+	projViewSub = rosNode->subscribe (projViewSubSo);
 
+	rosQueueThread = thread (bind (&VisibilityGrid::queueThread, this));
 }
 
-void VisibilityGrid::updateMatrix (const opt_view::ProjectedViewConstPtr &projectedView)
-{}
+void VisibilityGrid::updateMatrix (const opt_view::ProjectedViewConstPtr &newProjView)
+{
+	projView = *newProjView;
 
-void VisibilityGrid::buildVisual ()
+	redraw ();
+}
+
+void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
+{
+	Pose3d newPose;
+
+	newPose.Set (Vector3d (odom->pose.pose.position.x,
+						odom->pose.pose.position.y,
+						odom->pose.pose.position.z),
+			  Quaterniond (odom->pose.pose.orientation.w,
+						   odom->pose.pose.orientation.x,
+						   odom->pose.pose.orientation.y,
+						   odom->pose.pose.orientation.z));
+
+	cameraPose = newPose;
+}
+
+void VisibilityGrid::addVisual (VisualPtr visual)
+{
+	QUA;
+	visual->SetVisible (true);
+	scene->AddVisual (visual);
+	QUA;
+}
+
+void VisibilityGrid::removeVisual (VisualPtr visual)
+{
+	QUA;
+	scene->RemoveVisual (visual);
+	QUA;
+}
+
+void VisibilityGrid::initVisual (VisualPtr &visual)
+{
+	string visualName = getVisualName ();
+
+	visual.reset (new Visual (visualName, visualRoot));
+}
+
+void VisibilityGrid::redraw ()
+{
+	VisualPtr nuova, nuova2;
+	nuova.reset (new Visual ("visual_bella", visualRoot->GetParent ()));
+	nuova2.reset (new Visual ("visual_bella2", visualRoot->GetParent ()));
+	msgs::Visual visualMsg, visualMsg2;
+
+	visualMsg.set_name ("visualCiao");
+	visualMsg.set_parent_name (visualRoot->GetScene ()->Name ());
+	visualMsg2.set_name ("visualCiao");
+	visualMsg2.set_parent_name (visualRoot->GetScene ()->Name ());
+
+	visualMsg.mutable_geometry ()->set_type (msgs::Geometry::POLYLINE);
+	msgs::Polyline *poly = visualMsg.mutable_geometry ()->add_polyline ();
+
+	visualMsg2.mutable_geometry ()->set_type (msgs::Geometry::POLYLINE);
+	msgs::Polyline *poly2 = visualMsg2.mutable_geometry ()->add_polyline ();
+
+	msgs::Set (poly->add_point (), Vector2d (0,0));
+	msgs::Set (poly->add_point (), Vector2d (0,1));
+	msgs::Set (poly->add_point (), Vector2d (1,1));
+	poly->set_height (1);
+
+	msgs::Set (poly2->add_point (), Vector2d (0,0));
+	msgs::Set (poly2->add_point (), Vector2d (0,1));
+	msgs::Set (poly2->add_point (), Vector2d (-1,-1));
+	poly2->set_height (1);
+
+	auto msgPtr = new ConstVisualPtr(&visualMsg);
+	auto msgPtr2 = new ConstVisualPtr(&visualMsg2);
+
+	nuova->LoadFromMsg (*msgPtr);
+	nuova->SetPose (Pose3d ());
+	nuova->SetVisible (true);
+	visualRoot->GetScene ()->AddVisual (nuova);
+
+
+/*	msgs::Visual *visualMsg = visualMsgFromPoints (projView.points);
+	VisualPtr visualNew;
+
+	if (!first) {
+		removeVisual (visualOld);
+		visualOld = visualNew;
+	} else
+		first = false;
+	QUA;
+	string visualName = getVisualName ();
+
+	visualNew.reset (new Visual (visualName, visualRoot->GetParent ()));
+
+	auto msgPtr = new ConstVisualPtr(visualMsg);
+
+	visualNew->IsStatic ();
+
+	visualNew->LoadFromMsg (*msgPtr);
+	visualNew->SetPose (Pose3d ());
+	visualNew->SetVisible (true);
+	QUA;
+	scene->AddVisual (visualNew);
+	QUA;*/
+}
+
+msgs::Visual *VisibilityGrid::visualMsgFromPoints (const std::vector<geometry_msgs::Point> &points)
+{
+	msgs::Visual *visualMsg = new msgs::Visual;
+	msgs::Polyline *poly;
+	Vector3d pointCameraFrame, pointWorldFrame;
+
+	visualMsg->set_name (getVisualName ());
+	visualMsg->set_parent_name (scene->Name ());
+
+	visualMsg->mutable_geometry ()->set_type (msgs::Geometry::BOX);
+	msgs::Set (visualMsg->mutable_geometry ()->mutable_box ()->mutable_size (), Vector3d (1,1,1));
+
+	/*visualMsg->mutable_geometry ()->set_type (msgs::Geometry::POLYLINE);
+	poly = visualMsg->mutable_geometry ()->add_polyline ();
+
+	msgs::Set (poly->add_point (), Vector2d (0,0));
+	msgs::Set (poly->add_point (), Vector2d (0,1));
+	msgs::Set (poly->add_point (), Vector2d (1,1));
+	poly->set_height (1);*/
+	/*
+	for (int i = 0; i < points.size (); i++) {
+		pointCameraFrame = Vector3d (points[i].x, points[i].y, points[i].z);
+		pointWorldFrame = cameraPose.Rot () * pointCameraFrame + cameraPose.Pos ();
+
+		msgs::Set (poly->add_point (), Vector2d (pointWorldFrame.X (), pointWorldFrame.Y ()));
+	}
+	poly->set_height (0.1);*/
+
+	/*Color colorInner(0,0,0,0.3), colorZero (0,0,0,0);
+	msgs::Set (visualMsg->mutable_material ()->mutable_ambient (), colorInner);
+	msgs::Set (visualMsg->mutable_material ()->mutable_diffuse (), colorInner);
+	msgs::Set (visualMsg->mutable_material ()->mutable_emissive (), colorZero);*/
+
+	return visualMsg;
+}
+
+/*
+void VisibilityGrid::initVisual ()
 {
 	VisualPtr nuova, nuova2;
 	nuova.reset (new Visual ("visual_bella", visual->GetParent ()));
@@ -151,24 +318,10 @@ void VisibilityGrid::buildVisual ()
 		delete oldMsg;
 	}
 	oldMsg = visualMsg;
-	c++;*/
-}
+	c++;
+}*/
 
 
-void VisibilityGrid::odometryCallback (const nav_msgs::OdometryConstPtr &odom)
-{
-	Pose3d newPose;
-
-	newPose.Set (Vector3d (odom->pose.pose.position.x,
-						odom->pose.pose.position.y,
-						odom->pose.pose.position.z),
-			  Quaterniond (odom->pose.pose.orientation.w,
-						   odom->pose.pose.orientation.x,
-						   odom->pose.pose.orientation.y,
-						   odom->pose.pose.orientation.z));
-
-	pose = newPose;
-}
 
 void VisibilityGrid::queueThread () {
 	static const double timeout = 0.01;
