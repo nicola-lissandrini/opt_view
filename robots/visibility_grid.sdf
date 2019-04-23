@@ -87,22 +87,5 @@
         <inertia ixx="0.002" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.002" />
       </inertial>
     </link>
-    <link name="visibility_grid_link_5">
-      <visual name="camera_plugin_visual_5">
-        <plugin name="visibility_grid_plugin_5" filename="libvisibility_grid.so">
-          <camera_odom_topic>/uavs/agent_5/camera_odometry/odometry</camera_odom_topic>
-          <projected_view_topic>/uavs/agent_5/predicted_view/update</projected_view_topic>
-          <id>5</id>
-        </plugin>
-        <geometry>
-          <empty />
-        </geometry>
-      </visual>
-      <inertial>
-        <origin xyz="0 0 0" rpy="0 0 0" />
-        <mass value="0.01" />
-        <inertia ixx="0.002" ixy="0.0" ixz="0.0" iyy="0.002" iyz="0.0" izz="0.002" />
-      </inertial>
-    </link>
   </model>
 </sdf>

@@ -8,7 +8,7 @@
 #include <nav_msgs/Odometry.h>
 #include <opt_view/ProjectedView.h>
 
-#include <Eigen/SVD>
+#include <Eigen/QR>
 
 #define NODE_NAME "backprojection"
 #include "pd_rosnode.h"
@@ -16,33 +16,44 @@
 
 #define POINTS_NO 5
 
-#define pinv(A) ((A).completeOrthogonalDecomposition().pseudoInverse())
+// Moore penrose inverse
+/*#define lpinv(A) (((A).transpose() * (A)).inverse() * ((A).transpose()))
+#define pinv(A) (lpinv(A))
+#define rpinv(A) ((A).transpose() * ((A)  * (A).transpose()).inverse())*/
+
+
+typedef Eigen::Matrix<double, 3, 4> ProjectionMatrix;
 
 class BackProjection
 {
-	Eigen::Matrix<double, 3, 4>  projectionMatrix;
+	ProjectionMatrix  intrinsicMatrix;
 	int pxWidth, pxHeight;
 	std::vector<Eigen::Vector2d> pointsToProject;
 	Eigen::Isometry3d pose;
+	Eigen::Quaterniond toCamera;
 
 	bool initialized;
 	void updatePointsToProject (double width, double height);
 	Eigen::Vector3d backProject (Eigen::Vector2d imagePoint);
 
+	ProjectionMatrix getExtrinsicMatrix ();
+
 public:
-	BackProjection ():
-		initialized(false),
-		pointsToProject(POINTS_NO)
-	{}
+	BackProjection ();
 
 	void updateParams (const sensor_msgs::CameraInfo &cameraInfo);
 	void updatePose (const Eigen::Isometry3d &newPose);
 	std::vector<Eigen::Vector3d> backProjectPoints ();
+
+	inline bool isInitialized () {
+		return initialized;
+	}
 };
 
 class BackProjectionNode : public PdRosNode
 {
 	ros::Subscriber cameraInfoSub;
+	ros::Subscriber cameraOdomSub;
 	ros::Publisher projectedPointsPub;
 	BackProjection backProjection;
 
@@ -60,4 +71,5 @@ public:
 
 
 #endif // BACKPROJECTION_H
+
 

@@ -142,13 +142,12 @@ vector<Vector3d> VisibilityGrid::convertPoints (const std::vector<geometry_msgs:
 
 	converted.resize (points.size());
 
-	for (int i = 0; i < points.size (); i++) {
+	for (int i = 0; i < POINTS_NO; i++) {
 		cameraFramePoint = Vector3d (points[i].x,
 									 points[i].y,
 									 points[i].z);
-		worldFramePoint = cameraToWorld.Rot () * cameraFramePoint + cameraToWorld.Pos ();
-
-		converted[i] = worldFramePoint;
+		// No conversion
+		converted[i] = cameraFramePoint;
 	}
 	return converted;
 }
@@ -201,12 +200,15 @@ msgs::Visual VisibilityGrid::visualMsgFromPoints (const std::vector<Vector3d> &p
 	poly->set_height (1);
 	msgs::Set (visualMsg.mutable_pose (), Pose3d (0.1*t, 0,0, 0,0,0));*/
 
-	for (int i = 0; i < points.size (); i++) {
+	for (int i = 0; i < POINTS_NO; i++) {
 		point = points[i];
+
+		cout << "visgrid\n" << point << endl;
 
 		msgs::Set (poly->add_point (), Vector2d (point.X (), point.Y ()));
 	}
 	poly->set_height (0.001);
+	msgs::Set (visualMsg.mutable_pose (), Pose3d (0, 0,0, 0,0,0));
 
 	Color colorInner(0,0,0,0.3), colorZero (0,0,0,0);
 	msgs::Set (visualMsg.mutable_material ()->mutable_ambient (), colorInner);
