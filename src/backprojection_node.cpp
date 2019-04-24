@@ -92,7 +92,6 @@ Vector3d BackProjection::backProject (Vector2d imagePoint)
 	double lambda;
 
 	genericHomogeneous = extrinsicMatrix.fullPivHouseholderQr().solve (homogeneousImagePoint);
-	cout << "Originale\n"<< homogeneousImagePoint << "\nRicostruito\n" << extrinsicMatrix * genericHomogeneous << endl;
 	generic = genericHomogeneous.head<3> () * 1 / genericHomogeneous(3);
 
 	cout << generic << endl;
@@ -100,15 +99,8 @@ Vector3d BackProjection::backProject (Vector2d imagePoint)
 	director = generic - cameraOrigin;
 	director = director * (1 / director.norm ());
 
-	cout << director << endl;
-
 	lambda = - cameraOrigin(2) / director(2);
-
-	cout << "lambda\n" << lambda << "\n" << endl;
-
 	projected = cameraOrigin + lambda * director;
-
-	cout << "back\n" << projected << "\n" << endl;
 
 	return projected;
 }

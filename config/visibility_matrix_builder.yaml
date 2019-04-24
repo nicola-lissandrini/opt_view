@@ -1,0 +1,6 @@
+visibility_matrix_builder:
+  cell_size: 0.1
+  x_min_relative: -1
+  x_max_relative: 10
+  y_min_relative: -5
+  y_max_relative: 5

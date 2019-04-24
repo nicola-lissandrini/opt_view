@@ -51,12 +51,13 @@
 			<noiseUniformLinearVelocity>0 0  0</noiseUniformLinearVelocity> <!-- symmetric bounds of uniform noise [m/s] -->
 			<noiseUniformAngularVelocity>0 0  0</noiseUniformAngularVelocity> <!-- symmetric bounds of uniform noise [rad/s] -->
 		</plugin>
-		<plugin name="target_trajectory" filename="libtarget_trajectory.so">
+		<!--plugin name="target_trajectory" filename="libtarget_trajectory.so">
 			<link>target_base_link</link>
 			<initial_position x="1" y="0" z="0" />
-			<speed>0.5</speed>
+			<speed>0</speed>
+			<amplitude>0</amplitude>
 			<frequency>0.4</frequency>
 			<delay>3</delay>
-		</plugin>
+		</plugin-->
 	</model>
 </sdf>

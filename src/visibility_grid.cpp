@@ -203,8 +203,6 @@ msgs::Visual VisibilityGrid::visualMsgFromPoints (const std::vector<Vector3d> &p
 	for (int i = 0; i < POINTS_NO; i++) {
 		point = points[i];
 
-		cout << "visgrid\n" << point << endl;
-
 		msgs::Set (poly->add_point (), Vector2d (point.X (), point.Y ()));
 	}
 	poly->set_height (0.001);
