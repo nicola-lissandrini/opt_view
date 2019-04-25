@@ -18,6 +18,28 @@ Region paramRegion (XmlRpcValue &param)
 	return ret;
 }
 
+void VisibilityMatrix::toSparse (Sparseui &sparse) const  {
+	sparse.setFromTriplets (elements.begin (), elements.end ());
+}
+
+void VisibilityMatrix::clear() {
+	elements.clear ();
+}
+
+void VisibilityMatrix::resize (int rows, int cols)
+{
+	matrixRows = rows;
+	matrixCols = cols;
+}
+
+void VisibilityMatrix::set (int i, int j) {
+	elements.push_back (Tripletui (i, j, 1));
+}
+
+Tripletui VisibilityMatrix::getElement (int i) const {
+	return elements[i];
+}
+
 int Region::maxH () const {
 	return round ((rangeMax(0) - rangeMin(0)) / cellSize);
 }
@@ -78,6 +100,7 @@ bool VisibilityMatrixBuilder::setPoints (const std::vector<Vector3d> &newPoints)
 void VisibilityMatrixBuilder::setParams (XmlRpcValue &rpcParams)
 {
 	double cellSize = paramDouble (rpcParams["cell_size"]);
+
 	global = paramRegion (rpcParams["global_region"]);
 	local = paramRegion (rpcParams["local_region"]);
 	global.cellSize = cellSize;
@@ -110,10 +133,6 @@ Line VisibilityMatrixBuilder::getLine (const Vector3d &a, const Vector3d &b)
 	return line;
 }
 
-Vector2d VisibilityMatrixBuilder::indicesMap (int h, int k) {
-
-}
-
 void VisibilityMatrixBuilder::getLines (vector<Line> &lines)
 {
 	int i;
@@ -129,7 +148,7 @@ int VisibilityMatrixBuilder::sideSign (const Vector2d &point, const Line &line)
 {
 	Vector3d pointHomog(point(0), point(1), 1);
 
-	if (pointHomog.dot(line) > 0)
+	if (pointHomog.dot (line) > 0)
 		return 1;
 	else
 		return -1;
@@ -169,10 +188,10 @@ void VisibilityMatrixBuilder::buildMatrix (VisibilityMatrix &visibilityMatrix, c
 
 				if (globalIndices(0) >= global.maxH () ||
 						globalIndices(1) >= global.maxK ())
-					NODE_ERROR ("Local region is out of global. Trimming view. Possible Errors");
+					ROS_ERROR ("Local region is out of global. Trimming view. Possible Errors");
 				else
-					visibilityMatrix(globalIndices(0),
-									 globalIndices(1)) = 1;
+					visibilityMatrix.set (globalIndices(0),
+										  globalIndices(1));
 			}
 		}
 	}
@@ -182,7 +201,7 @@ void VisibilityMatrixBuilder::compute (VisibilityMatrix &visibilityMatrix)
 {
 	vector<Line> lines;
 
-	visibilityMatrix = MatrixXd::Zero (global.maxH (), global.maxK ());
+	visibilityMatrix.resize (global.maxH (), global.maxK ());
 	getLines (lines);
 	buildMatrix (visibilityMatrix, lines);
 
@@ -196,3 +215,4 @@ bool VisibilityMatrixBuilder::isReady() {
 bool VisibilityMatrixBuilder::hasComputed() {
 	return computed;
 }
+

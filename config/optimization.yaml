@@ -1,0 +1,7 @@
+optimization:
+  rate: 100
+  multiagent_topics_pre: /uavs/agent_
+  visibility_matrix_topic_post: /visibility_matrix
+  camera_pose_topic_post: /camera_odometry/odometry
+  rotation_topic: /uavs/formation/update
+  angle_step: 0.1

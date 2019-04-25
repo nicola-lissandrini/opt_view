@@ -27,6 +27,11 @@ void SelfPositioning::setTargetPose (const Pose &pose) {
 	targetPose = pose;
 }
 
+void SelfPositioning::updateFormation (const Isometry3d &transformation, int i)
+{
+	formationGeometry[i] = formationGeometry[i] * transformation;
+}
+
 int SelfPositioning::setFormationState (const Formation &formation)
 {
 	if (formation.size () != currentFormation.size ())

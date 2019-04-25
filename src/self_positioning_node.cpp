@@ -22,8 +22,18 @@ void SelfPositioningNode::initROS ()
 {
 	targetPoseSub = nh.subscribe (paramString (params["target_sub"]), 1, &SelfPositioningNode::targetCallback, this);
 	formationStateSub = nh.subscribe (paramString (params["formation_sub"]), 1, &SelfPositioningNode::formationStateCallback, this);
+	angleSub = nh.subscribe (paramString (params["angle_sub"]), 1, &SelfPositioningNode::updateFormation, this);
 
 	goalPub = nh.advertise<opt_view::MultiagentPose> (paramString (params["trajectory_pub"]), 100);
+}
+
+void SelfPositioningNode::updateFormation (const opt_view::MultiagentPose &transformation)
+{
+	Isometry3d transformEigen;
+	int agentId = transformation.agent_id;
+	tf::poseMsgToEigen (transformation.target_pose.pose, transformEigen);
+
+	selfPositioning.updateFormation (transformEigen, agentId);
 }
 
 int SelfPositioningNode::actions ()
@@ -31,6 +41,7 @@ int SelfPositioningNode::actions ()
 	if (!started) {
 		return 0;
 	}
+
 	selfPositioning.compute ();
 	publishTrajectory ();
 	return 0;

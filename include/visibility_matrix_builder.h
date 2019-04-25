@@ -1,16 +1,18 @@
 #ifndef VISIBILITY_MATRIX_BUILDER_H
 #define VISIBILITY_MATRIX_BUILDER_H
 
-#define NODE_NAME "visibility_matrix_builder"
-#include "pd_rosnode.h"
+#include "common.h"
+
 #include <eigen_conversions/eigen_msg.h>
 #include <opt_view/ProjectedView.h>
 #include <std_msgs/Float64.h>
+#include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/OccupancyGrid.h>
-#include <Eigen/Core>
+#include <Eigen/Dense>
 #include <Eigen/Sparse>
-#include <Eigen/Geometry>
+#include <boost/mpl/clear.hpp>
+
 
 #define POINTS_NO 5
 #define CORNERS_NO (POINTS_NO - 1)
@@ -18,7 +20,34 @@
 #define CENTER_PT_INDEX (POINTS_NO - 1)
 
 typedef Eigen::Vector3d Line;
-typedef Eigen::MatrixXd VisibilityMatrix;
+typedef Eigen::Triplet<u_int8_t> Tripletui;
+typedef Eigen::SparseMatrix<u_int8_t> Sparseui;
+
+class VisibilityMatrix
+{
+	std::vector<Tripletui> elements;
+
+	int matrixRows;
+	int matrixCols;
+
+public:
+	VisibilityMatrix () {}
+
+	void clear ();
+	void resize (int rows, int cols);
+	void set (int i, int j);
+	Tripletui getElement (int i) const;
+	void toSparse (Sparseui &sparse) const;
+	int rows () const {
+		return matrixRows;
+	}
+	int cols () const {
+		return matrixCols;
+	}
+	int count () const {
+		return elements.size ();
+	}
+};
 
 struct Region
 {
@@ -77,28 +106,6 @@ public:
 	inline Eigen::Isometry3d getPose () {
 		return cameraPose;
 	}
-};
-
-class VisibilityMatrixBuilderNode : public PdRosNode
-{
-	ros::Subscriber projViewSub;
-	ros::Subscriber cameraOdomSub;
-	ros::Publisher matrixRvizPub;
-	VisibilityMatrixBuilder builder;
-	VisibilityMatrix visibilityMatrix;
-	nav_msgs::MapMetaData mapData;
-
-
-	int actions ();
-	void initParams ();
-	void initROS ();
-	void publishRviz(const VisibilityMatrix &matrix);
-
-public:
-	VisibilityMatrixBuilderNode();
-
-	void projViewCallback (const opt_view::ProjectedView &newProjView);
-	void cameraOdomCallback (const nav_msgs::Odometry &odom);
 };
 
 #endif // VISIBILITY_MATRIX_BUILDER_H

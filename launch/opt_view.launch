@@ -21,24 +21,33 @@
 
 	<group ns="uavs">
 		<include file="$(find opt_view)/launch/spawn_agent.launch">
-			<arg name="id" value="0" />
 			<arg name="y" value="0" />
+			<arg name="id" value="0" />
+			<arg name="leader" value="true" />
 		</include>
 		<include file="$(find opt_view)/launch/spawn_agent.launch">
-			<arg name="id" value="1" />
 			<arg name="y" value="1" />
+			<arg name="id" value="1" />
+			<arg name="neighbor_id" value="0" />
+			<arg name="optimization_type" value="CCW" />
 		</include>
 		<include file="$(find opt_view)/launch/spawn_agent.launch">
-			<arg name="id" value="2" />
 			<arg name="y" value="-1" />
+			<arg name="id" value="2" />
+			<arg name="neighbor_id" value="0" />
+			<arg name="optimization_type" value="CW" />
 		</include>
 		<include file="$(find opt_view)/launch/spawn_agent.launch">
-			<arg name="id" value="3" />
 			<arg name="y" value="2" />
+			<arg name="id" value="3" />
+			<arg name="neighbor_id" value="1" />
+			<arg name="optimization_type" value="CCW" />
 		</include>
 		<include file="$(find opt_view)/launch/spawn_agent.launch">
-			<arg name="id" value="4" />
 			<arg name="y" value="-2" />
+			<arg name="id" value="4" />
+			<arg name="neighbor_id" value="2" />
+			<arg name="optimization_type" value="CW" />
 		</include>
 
 		<rosparam command="load" file="$(find opt_view)/config/multiagent_command.yaml" />

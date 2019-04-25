@@ -4,6 +4,7 @@ self_positioning:
   target_sub: /target/pose
   trajectory_pub: /uavs/multiagent_command/pose
   formation_sub: /uavs/formation_state
+  angle_sub: /uavs/formation/update
   formation_geometry:
     - pos:
         x: -1.0

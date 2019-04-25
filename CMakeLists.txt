@@ -32,6 +32,8 @@ add_message_files(
 	MultiagentPose.msg
 	Formation.msg
 	ProjectedView.msg
+	TripletInt.msg
+	SparseMatrixInt.msg
 )
 
 generate_messages(
@@ -61,6 +63,10 @@ add_dependencies(backprojection ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 add_executable (visibility_matrix_builder src/visibility_matrix_builder.cpp  src/visibility_matrix_builder_node.cpp)
 target_link_libraries (visibility_matrix_builder ${catkin_LIBRARIES} pd_lib)
 add_dependencies(visibility_matrix_builder ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable (optimization src/optimization_node.cpp)
+target_link_libraries (optimization ${catkin_LIBRARIES} pd_lib)
+add_dependencies(optimization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 link_directories(${GAZEBO_LIBRARY_DIRS})

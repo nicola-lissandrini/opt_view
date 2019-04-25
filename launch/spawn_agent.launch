@@ -2,6 +2,10 @@
 
 <launch>
   <arg name="id" />
+  <arg name="optimization_type" default="CW"/>
+  <arg name="neighbor_id" default="-1" />
+  <arg name="leader" default="false" />
+
   <arg name="name" default="agent_$(arg id)" />
   <arg name="mav_name" default="ardrone"/>
   <arg name="namespace" default="uavs"/>
@@ -59,11 +63,12 @@
 
     <rosparam file="$(find opt_view)/config/backprojection.yaml" command="load" />
 
-    <param name="backprojection/agent_id" type="string" value="$(arg id)" />
-    <param name="backprojection/camera_info_topic" type="string" value="camera1/camera_info" />
-    <param name="backprojection/camera_odom_topic" type="string" value="camera_odometry/odometry" />
-    <param name="backprojection/projected_view_topic" type="string" value="predicted_view/update" />
-    <node name="backprojection_$(arg id)" pkg="opt_view" type="backprojection" output="screen" />
+    <node name="backprojection" pkg="opt_view" type="backprojection" output="screen">
+      <param name="agent_id" type="string" value="$(arg id)" />
+      <param name="camera_info_topic" type="string" value="camera1/camera_info" />
+      <param name="camera_odom_topic" type="string" value="camera_odometry/odometry" />
+      <param name="projected_view_topic" type="string" value="predicted_view/update" />
+    </node>
 
     <rosparam file="$(find opt_view)/config/visibility_matrix_builder.yaml" command="load" />
 
@@ -72,8 +77,21 @@
         value="camera_odometry/odometry" />
       <param name="projected_view_topic" value="predicted_view/update" />
       <param name="occupancy_grid_topic" value="occupancy_grid" />
+      <param name="visibility_matrix_topic" value="visibility_matrix" />
       <param name="agent_id" value="$(arg id)" />
     </node>
+
+    <group if="$(arg leader)">
+      <!-- Loss probability prediction -->
+    </group>
+    <group unless="$(arg leader)">
+      <rosparam file="$(find opt_view)/config/optimization.yaml" command="load" />
+      <node name="optimization" pkg="opt_view" type="optimization" output="screen">
+        <param name="optimization_type" value="$(arg optimization_type)" />
+        <param name="agent_id" value="$(arg id)" />
+        <param name="neighbor_id" value="$(arg neighbor_id)" />
+      </node>
+    </group>
       
   </group>
 </launch>
