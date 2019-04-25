@@ -1,6 +1,13 @@
 visibility_matrix_builder:
+  rate: 100
   cell_size: 0.1
-  x_min_relative: -1
-  x_max_relative: 10
-  y_min_relative: -5
-  y_max_relative: 5
+  global_region:
+    x_min: -10
+    x_max: 30
+    y_min: -10
+    y_max: 10
+  local_region:
+    x_min: 0
+    x_max: 10
+    y_min: -5
+    y_max: 5

@@ -94,8 +94,6 @@ Vector3d BackProjection::backProject (Vector2d imagePoint)
 	genericHomogeneous = extrinsicMatrix.fullPivHouseholderQr().solve (homogeneousImagePoint);
 	generic = genericHomogeneous.head<3> () * 1 / genericHomogeneous(3);
 
-	cout << generic << endl;
-
 	director = generic - cameraOrigin;
 	director = director * (1 / director.norm ());
 
@@ -133,8 +131,6 @@ void BackProjection::updateParams (const sensor_msgs::CameraInfo &cameraInfo)
 	//intrinsicMatrix << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0;
 	pxWidth =cameraInfo.width;
 	pxHeight = cameraInfo.height;
-
-	cout << pxWidth << " " << pxHeight << endl;
 	updatePointsToProject (pxWidth, pxHeight);
 }
 

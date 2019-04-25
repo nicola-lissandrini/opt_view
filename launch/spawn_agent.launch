@@ -59,11 +59,21 @@
 
     <rosparam file="$(find opt_view)/config/backprojection.yaml" command="load" />
 
-
+    <param name="backprojection/agent_id" type="string" value="$(arg id)" />
+    <param name="backprojection/camera_info_topic" type="string" value="camera1/camera_info" />
+    <param name="backprojection/camera_odom_topic" type="string" value="camera_odometry/odometry" />
+    <param name="backprojection/projected_view_topic" type="string" value="predicted_view/update" />
     <node name="backprojection_$(arg id)" pkg="opt_view" type="backprojection" output="screen" />
-      <param name="backprojection/agent_id" type="string" value="$(arg id)" />
-      <param name="backprojection/camera_info_topic" type="string" value="camera1/camera_info" />
-      <param name="backprojection/camera_odom_topic" type="string" value="camera_odometry/odometry" />
-      <param name="backprojection/projected_view_topic" type="string" value="predicted_view/update" />
+
+    <rosparam file="$(find opt_view)/config/visibility_matrix_builder.yaml" command="load" />
+
+    <node name="visibility_matrix_builder" pkg="opt_view" type="visibility_matrix_builder" output="screen">
+      <param name="camera_odom_topic"
+        value="camera_odometry/odometry" />
+      <param name="projected_view_topic" value="predicted_view/update" />
+      <param name="occupancy_grid_topic" value="occupancy_grid" />
+      <param name="agent_id" value="$(arg id)" />
+    </node>
+      
   </group>
 </launch>

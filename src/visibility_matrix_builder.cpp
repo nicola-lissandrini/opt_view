@@ -1,9 +1,45 @@
 #include "visibility_matrix_builder.h"
 
+#include <eigen_conversions/eigen_msg.h>
 using namespace ros;
 using namespace XmlRpc;
 using namespace std;
 using namespace Eigen;
+
+Region paramRegion (XmlRpcValue &param)
+{
+	Region ret;
+
+	ret.rangeMin(0) = paramDouble (param["x_min"]);
+	ret.rangeMax(0) = paramDouble (param["x_max"]);
+	ret.rangeMin(1) = paramDouble (param["y_min"]);
+	ret.rangeMax(1) = paramDouble (param["y_max"]);
+
+	return ret;
+}
+
+int Region::maxH () const {
+	return (rangeMax(0) - rangeMin(0)) / cellSize;
+}
+
+int Region::maxK () const {
+	return (rangeMax(1) - rangeMin(1)) / cellSize;
+}
+
+Vector2d Region::operator () (int h, int k) const
+{
+	assert (h < maxH() && k < maxK());
+	return pose.inverse () * Vector2d (rangeMin(0) + h * cellSize,
+							rangeMin(1) + k * cellSize);
+}
+
+Vector2i Region::worldIndices (Vector2d pt) const
+{
+	Vector2d ptLocalFrame = pose * pt;
+
+	return Vector2i ((ptLocalFrame(0) - rangeMin(0)) / cellSize,
+					 (ptLocalFrame(1) - rangeMin(1)) / cellSize);
+}
 
 VisibilityMatrixBuilderNode::VisibilityMatrixBuilderNode():
 	PdRosNode(NODE_NAME)
@@ -12,14 +48,24 @@ VisibilityMatrixBuilderNode::VisibilityMatrixBuilderNode():
 	initROS ();
 }
 
-void VisibilityMatrixBuilderNode::initParams () {
+void VisibilityMatrixBuilderNode::initParams ()
+{
 	builder.setParams (params);
+	Region globalRegion = builder.getGlobalRegion ();
+
+	mapData.map_load_time = Time::now ();
+	mapData.resolution = globalRegion.cellSize;
+	mapData.width = globalRegion.maxH ();
+	mapData.height = globalRegion.maxK ();
+
+	agentId = (int) params["agent_id"];
 }
 
 void VisibilityMatrixBuilderNode::initROS ()
 {
 	cameraOdomSub = nh.subscribe (paramString (params["camera_odom_topic"]), 1, &VisibilityMatrixBuilderNode::cameraOdomCallback, this);
 	projViewSub = nh.subscribe (paramString (params["projected_view_topic"]), 1, &VisibilityMatrixBuilderNode::projViewCallback, this);
+	matrixRvizPub = nh.advertise<nav_msgs::OccupancyGrid> (paramString (params["occupancy_grid_topic"]), 1);
 }
 
 void VisibilityMatrixBuilderNode::cameraOdomCallback (const nav_msgs::Odometry &odom)
@@ -28,12 +74,17 @@ void VisibilityMatrixBuilderNode::cameraOdomCallback (const nav_msgs::Odometry &
 
 	tf::poseMsgToEigen (odom.pose.pose, eigenPose);
 
-	VisibilityMatrixBuilder.setPose (eigenPose);
+	builder.setPose (eigenPose);
 }
 
 void VisibilityMatrixBuilderNode::projViewCallback (const opt_view::ProjectedView &newProjView)
 {
 	vector<Vector3d> points;
+
+	if (isnan (newProjView.points[0].x)) {
+		NODE_INFO ("Received nan in message. Skipping.");
+		return;
+	}
 
 	points.resize (newProjView.points.size ());
 
@@ -47,13 +98,48 @@ void VisibilityMatrixBuilderNode::projViewCallback (const opt_view::ProjectedVie
 	}
 }
 
-int VisibilityMatrixBuilderNode::actions ()
+void VisibilityMatrixBuilderNode::publishRviz (const VisibilityMatrix &matrix)
 {
+	Isometry3d pose = builder.getPose ();
+	nav_msgs::OccupancyGrid rvizMatrix;
+	mapData.map_load_time = Time::now ();
+	mapData.origin.position.x = builder.getGlobalRegion ().rangeMin(0);
+	mapData.origin.position.y = builder.getGlobalRegion ().rangeMin(1);
 
+	rvizMatrix.header.seq = 0;
+	rvizMatrix.header.stamp = Time::now ();
+	rvizMatrix.header.frame_id = "map";
+	rvizMatrix.info = mapData;
+	rvizMatrix.data.resize (matrix.rows () * matrix.cols());
+
+	for (int i = 0; i < matrix.rows (); i++) {
+		for (int j = 0; j < matrix.cols (); j++) {
+			rvizMatrix.data[j * matrix.rows () + i] = (matrix(i,j) > 0 ? 50:0);
+		}
+	}
+
+	matrixRvizPub.publish (rvizMatrix);
 }
 
-void VisibilityMatrixBuilder::setPose (const Isometry3d &pose) {
-	cameraPose = pose;
+int VisibilityMatrixBuilderNode::actions ()
+{
+	if (builder.isReady () && !builder.hasComputed ()) {
+		visibilityMatrix.resize (0,0);
+		builder.compute (visibilityMatrix);
+		publishRviz (visibilityMatrix);
+
+	}
+
+	return 0;
+}
+
+void VisibilityMatrixBuilder::setPose (const Isometry3d &pose)
+{
+	Vector3d pos3d = pose.translation ();
+	Vector3d euler = pose.rotation ().eulerAngles (0, 1, 2);
+	local.pose = Translation2d (pos3d(0), pos3d(1)) * Rotation2Dd (euler(2));
+	poseSet = true;
+	computed = false;
 }
 
 bool VisibilityMatrixBuilder::setPoints (const std::vector<Vector3d> &newPoints)
@@ -62,23 +148,24 @@ bool VisibilityMatrixBuilder::setPoints (const std::vector<Vector3d> &newPoints)
 		return false;
 	points.clear ();
 	points = newPoints;
+	center = points[CENTER_PT_INDEX].head<2> ();
+
+	pointsSet = true;
+	computed = false;
+
 	return true;
 }
 
-void VisibilityMatrixBuilder::setParams (const XmlRpcValue &_params)
+void VisibilityMatrixBuilder::setParams (XmlRpcValue &rpcParams)
 {
-	params.cellSize = paramDouble (_params["cell_size"]);
-	params.xMinRelative = paramDouble (_params["x_min_relative"]);
-	params.yMinRelative = paramDouble (_params["y_min_relative"]);
+	double cellSize = paramDouble (rpcParams["cell_size"]);
+	global = paramRegion (rpcParams["global_region"]);
+	local = paramRegion (rpcParams["local_region"]);
+	global.cellSize = cellSize;
+	local.cellSize = cellSize;
 
-	double xMaxRelative = paramDouble (_params["x_max_relative"]);
-	double yMaxRelative = paramDouble (_params["y_max_relative"]);
-
-	params.countH = (xMaxRelative - params.xMinRelative) / params.cellSize;
-	params.countK = (yMaxRelative - params.yMinRelative) / params.cellSize;
-
-	initializeMatrix (params.countH, params.countK);
-	initialized = true;
+	paramsSet = true;
+	computed = false;
 }
 
 Line VisibilityMatrixBuilder::getLine (const Vector3d &a, const Vector3d &b)
@@ -96,21 +183,24 @@ Line VisibilityMatrixBuilder::getLine (const Vector3d &a, const Vector3d &b)
 	phi(1, 2) = 1;
 
 	// Solve problem phi * line = 0
-	line = phi.fullPivHouseholderQr ().solve (Vector3d::Zero ());
+	FullPivLU<Matrix<double, 2, 3>> luDecomp(phi);
+	line = luDecomp.kernel ();
+
 	return line;
 }
 
 Vector2d VisibilityMatrixBuilder::indicesMap (int h, int k) {
-	return Vector2d (params.xMinRelative + double(h) * params.cellSize,
-					 params.yMinRelative + double(k) * params.cellSize);
+
 }
 
 void VisibilityMatrixBuilder::getLines (vector<Line> &lines)
 {
+	int i;
 	lines.resize (LINES_NO);
 
-	for (int i = 0; i < LINES_NO - 1; i++)
-		lines[i] = getLine (points[i], points[i-1]);
+	for (i = 0; i < LINES_NO - 1; i++) {
+		lines[i] = getLine (points[i], points[i+1]);
+	}
 	lines[i] = getLine(points[i], points[0]);
 }
 
@@ -124,13 +214,20 @@ int VisibilityMatrixBuilder::sideSign (const Vector2d &point, const Line &line)
 		return -1;
 }
 
+void VisibilityMatrixBuilder::resetFlags()
+{
+	poseSet = false;
+	pointsSet = false;
+	computed = false;
+}
+
 bool VisibilityMatrixBuilder::checkInside (const Vector2d &point, const std::vector<Line> &lines)
 {
 	int centerSign, currPtSign;
 
-	for (int i = 0; i < CENTER_PT_INDEX; i++) {
-		centerSign = sideSign (point[CENTER_PT_INDEX], line[i]);
-		currPtSign = sideSign (point[i], line[i]);
+	for (int i = 0; i < CORNERS_NO; i++) {
+		centerSign = sideSign (center, lines[i]);
+		currPtSign = sideSign (point, lines[i]);
 
 		if (centerSign != currPtSign)
 			return false;
@@ -139,26 +236,39 @@ bool VisibilityMatrixBuilder::checkInside (const Vector2d &point, const std::vec
 	return true;
 }
 
-void VisibilityMatrixBuilder::buildMatrix (MatrixXd &visibilityMatrix, const vector<Line> &lines)
+void VisibilityMatrixBuilder::buildMatrix (VisibilityMatrix &visibilityMatrix, const vector<Line> &lines)
 {
-	for (int h = 0; h < params.countH; h++) {
-		for (int k = 0; k < params.countK; k++) {
-			Vector2d curr = indicesMap (h, k);
+	for (int h = 0; h < local.maxH (); h++) {
+		for (int k = 0; k < local.maxK (); k++) {
+			Vector2d curr = local(h, k);
 
-			if (checkInside (curr, lines))
-				visibilityMatrix(h,k) = 1;
+			cout << curr << endl << endl;
+
+			if (checkInside (curr, lines)) {
+				Vector2i globalIndices = local.worldIndices (curr);
+				visibilityMatrix(globalIndices(0), globalIndices(1)) = 1;
+			}
 		}
 	}
 }
 
-void VisibilityMatrixBuilder::compute (MatrixXd &visibilityMatrix)
+void VisibilityMatrixBuilder::compute (VisibilityMatrix &visibilityMatrix)
 {
 	vector<Line> lines;
 
-	visibilityMatrix = MatrixXd::Zero (params.countH, params.countK);
+	visibilityMatrix = MatrixXd::Zero (global.maxH (), global.maxK ());
 	getLines (lines);
-
 	buildMatrix (visibilityMatrix, lines);
+
+	resetFlags ();
+}
+
+bool VisibilityMatrixBuilder::isReady() {
+	return poseSet && pointsSet && paramsSet;
+}
+
+bool VisibilityMatrixBuilder::hasComputed() {
+	return computed;
 }
 
 int main (int argc, char *argv[])
