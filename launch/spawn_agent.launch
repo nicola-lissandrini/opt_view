@@ -65,9 +65,9 @@
     <param name="backprojection/projected_view_topic" type="string" value="predicted_view/update" />
     <node name="backprojection_$(arg id)" pkg="opt_view" type="backprojection" output="screen" />
 
-    <rosparam file="$(find opt_view)/config/optimization.yaml" command="load" />
+    <rosparam file="$(find opt_view)/config/visibility_matrix_builder.yaml" command="load" />
 
-    <node name="optimization" pkg="opt_view" type="optimization" output="screen">
+    <node name="visibility_matrix_builder" pkg="opt_view" type="visibility_matrix_builder" output="screen">
       <param name="camera_odom_topic"
         value="camera_odometry/odometry" />
       <param name="projected_view_topic" value="predicted_view/update" />
