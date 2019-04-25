@@ -30,12 +30,12 @@ struct Region
 	int maxH () const;
 	int maxK () const;
 	Eigen::Vector2d operator() (int h, int j) const;
-	Eigen::Vector2i worldIndices (Eigen::Vector2d pt) const;
+	Eigen::Vector2i indicesFromWorld (Eigen::Vector2d pt) const;
+	Eigen::Vector2d worldStart() const;
+	Eigen::Vector2d worldEnd() const;
 };
 
 Region paramRegion (XmlRpc::XmlRpcValue &param);
-
-int agentId;
 
 class VisibilityMatrixBuilder
 {
@@ -67,8 +67,8 @@ public:
 	void setParams (XmlRpc::XmlRpcValue &rpcParams);
 	void compute (VisibilityMatrix &visibilityMatrix);
 
-	inline bool isReady ();
-	inline bool hasComputed ();
+	bool isReady ();
+	bool hasComputed ();
 
 
 	inline Region getGlobalRegion () {

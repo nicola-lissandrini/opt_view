@@ -1,7 +1,7 @@
 #include "visibility_matrix_builder.h"
 
 #include <eigen_conversions/eigen_msg.h>
-using namespace ros;
+
 using namespace XmlRpc;
 using namespace std;
 using namespace Eigen;
@@ -19,125 +19,44 @@ Region paramRegion (XmlRpcValue &param)
 }
 
 int Region::maxH () const {
-	return (rangeMax(0) - rangeMin(0)) / cellSize;
+	return round ((rangeMax(0) - rangeMin(0)) / cellSize);
 }
 
 int Region::maxK () const {
-	return (rangeMax(1) - rangeMin(1)) / cellSize;
+	return round ((rangeMax(1) - rangeMin(1)) / cellSize);
 }
 
 Vector2d Region::operator () (int h, int k) const
 {
 	assert (h < maxH() && k < maxK());
-	return pose.inverse () * Vector2d (rangeMin(0) + h * cellSize,
+
+	return pose * Vector2d (rangeMin(0) + h * cellSize,
 							rangeMin(1) + k * cellSize);
 }
 
-Vector2i Region::worldIndices (Vector2d pt) const
+Vector2i Region::indicesFromWorld (Vector2d pt) const
 {
-	Vector2d ptLocalFrame = pose * pt;
+	Vector2d ptLocalFrame = pose.inverse () * pt;
 
-	return Vector2i ((ptLocalFrame(0) - rangeMin(0)) / cellSize,
-					 (ptLocalFrame(1) - rangeMin(1)) / cellSize);
+
+	return Vector2i (round ((ptLocalFrame(0) - rangeMin(0)) / cellSize),
+					 round ((ptLocalFrame(1) - rangeMin(1)) / cellSize));
 }
 
-VisibilityMatrixBuilderNode::VisibilityMatrixBuilderNode():
-	PdRosNode(NODE_NAME)
-{
-	initParams ();
-	initROS ();
+Vector2d Region::worldStart () const {
+	return pose * rangeMin;
 }
 
-void VisibilityMatrixBuilderNode::initParams ()
-{
-	builder.setParams (params);
-	Region globalRegion = builder.getGlobalRegion ();
-
-	mapData.map_load_time = Time::now ();
-	mapData.resolution = globalRegion.cellSize;
-	mapData.width = globalRegion.maxH ();
-	mapData.height = globalRegion.maxK ();
-
-	agentId = (int) params["agent_id"];
-}
-
-void VisibilityMatrixBuilderNode::initROS ()
-{
-	cameraOdomSub = nh.subscribe (paramString (params["camera_odom_topic"]), 1, &VisibilityMatrixBuilderNode::cameraOdomCallback, this);
-	projViewSub = nh.subscribe (paramString (params["projected_view_topic"]), 1, &VisibilityMatrixBuilderNode::projViewCallback, this);
-	matrixRvizPub = nh.advertise<nav_msgs::OccupancyGrid> (paramString (params["occupancy_grid_topic"]), 1);
-}
-
-void VisibilityMatrixBuilderNode::cameraOdomCallback (const nav_msgs::Odometry &odom)
-{
-	Isometry3d eigenPose;
-
-	tf::poseMsgToEigen (odom.pose.pose, eigenPose);
-
-	builder.setPose (eigenPose);
-}
-
-void VisibilityMatrixBuilderNode::projViewCallback (const opt_view::ProjectedView &newProjView)
-{
-	vector<Vector3d> points;
-
-	if (isnan (newProjView.points[0].x)) {
-		NODE_INFO ("Received nan in message. Skipping.");
-		return;
-	}
-
-	points.resize (newProjView.points.size ());
-
-	for (int i = 0; i < newProjView.points.size (); i++) {
-		tf::pointMsgToEigen (newProjView.points[i], points[i]);
-	}
-
-	if (!builder.setPoints (points)) {
-		NODE_INFO ("Invalid points number. Skipping.");
-		return;
-	}
-}
-
-void VisibilityMatrixBuilderNode::publishRviz (const VisibilityMatrix &matrix)
-{
-	Isometry3d pose = builder.getPose ();
-	nav_msgs::OccupancyGrid rvizMatrix;
-	mapData.map_load_time = Time::now ();
-	mapData.origin.position.x = builder.getGlobalRegion ().rangeMin(0);
-	mapData.origin.position.y = builder.getGlobalRegion ().rangeMin(1);
-
-	rvizMatrix.header.seq = 0;
-	rvizMatrix.header.stamp = Time::now ();
-	rvizMatrix.header.frame_id = "map";
-	rvizMatrix.info = mapData;
-	rvizMatrix.data.resize (matrix.rows () * matrix.cols());
-
-	for (int i = 0; i < matrix.rows (); i++) {
-		for (int j = 0; j < matrix.cols (); j++) {
-			rvizMatrix.data[j * matrix.rows () + i] = (matrix(i,j) > 0 ? 50:0);
-		}
-	}
-
-	matrixRvizPub.publish (rvizMatrix);
-}
-
-int VisibilityMatrixBuilderNode::actions ()
-{
-	if (builder.isReady () && !builder.hasComputed ()) {
-		visibilityMatrix.resize (0,0);
-		builder.compute (visibilityMatrix);
-		publishRviz (visibilityMatrix);
-
-	}
-
-	return 0;
+Vector2d Region::worldEnd () const {
+	return pose * rangeMax;
 }
 
 void VisibilityMatrixBuilder::setPose (const Isometry3d &pose)
 {
 	Vector3d pos3d = pose.translation ();
-	Vector3d euler = pose.rotation ().eulerAngles (0, 1, 2);
-	local.pose = Translation2d (pos3d(0), pos3d(1)) * Rotation2Dd (euler(2));
+	Quaterniond rot3d(pose.rotation ());
+	local.pose = Translation2d (pos3d(0), pos3d(1)) * Rotation2Dd (0);
+
 	poseSet = true;
 	computed = false;
 }
@@ -163,6 +82,8 @@ void VisibilityMatrixBuilder::setParams (XmlRpcValue &rpcParams)
 	local = paramRegion (rpcParams["local_region"]);
 	global.cellSize = cellSize;
 	local.cellSize = cellSize;
+	global.pose = Translation2d (0,0) * Rotation2Dd (0);
+	local.pose = global.pose;
 
 	paramsSet = true;
 	computed = false;
@@ -242,11 +163,16 @@ void VisibilityMatrixBuilder::buildMatrix (VisibilityMatrix &visibilityMatrix, c
 		for (int k = 0; k < local.maxK (); k++) {
 			Vector2d curr = local(h, k);
 
-			cout << curr << endl << endl;
 
 			if (checkInside (curr, lines)) {
-				Vector2i globalIndices = local.worldIndices (curr);
-				visibilityMatrix(globalIndices(0), globalIndices(1)) = 1;
+				Vector2i globalIndices = global.indicesFromWorld (curr);
+
+				if (globalIndices(0) >= global.maxH () ||
+						globalIndices(1) >= global.maxK ())
+					NODE_ERROR ("Local region is out of global. Trimming view. Possible Errors");
+				else
+					visibilityMatrix(globalIndices(0),
+									 globalIndices(1)) = 1;
 			}
 		}
 	}
@@ -269,12 +195,4 @@ bool VisibilityMatrixBuilder::isReady() {
 
 bool VisibilityMatrixBuilder::hasComputed() {
 	return computed;
-}
-
-int main (int argc, char *argv[])
-{
-	init (argc, argv, NODE_NAME);
-	VisibilityMatrixBuilderNode vmb;
-
-	return vmb.spin ();
 }
