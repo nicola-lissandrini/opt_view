@@ -1,4 +1,5 @@
 #include "pd_rosnode.h"
+
 #include <Eigen/Geometry>
 
 using namespace ros;
@@ -43,10 +44,8 @@ Pose paramPose (XmlRpcValue &param)
 	return ret;
 }
 
-Eigen::Affine3d paramPoseEigen (XmlRpcValue &param)
+Eigen::Isometry3d paramPoseEigen(XmlRpcValue &param)
 {
-	Eigen::Affine3d ret;
-
 	Eigen::Translation3d tr(
 					paramDouble (param["pos"]["x"]),
 					paramDouble (param["pos"]["y"]),

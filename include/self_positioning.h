@@ -10,6 +10,8 @@
 #include "pd_rosnode.h"
 #include "common.h"
 
+typedef Eigen::Isometry3d Pose;
+
 typedef std::vector<Pose> Formation;
 typedef Eigen::Vector3d Force;
 typedef std::vector<Eigen::Vector3d> Vectors;

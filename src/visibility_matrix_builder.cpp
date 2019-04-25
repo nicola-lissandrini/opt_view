@@ -1,6 +1,7 @@
 #include "visibility_matrix_builder.h"
 
 #include <eigen_conversions/eigen_msg.h>
+#include "pd_rosnode.h"
 
 using namespace XmlRpc;
 using namespace std;
@@ -110,10 +111,6 @@ Line VisibilityMatrixBuilder::getLine (const Vector3d &a, const Vector3d &b)
 	return line;
 }
 
-Vector2d VisibilityMatrixBuilder::indicesMap (int h, int k) {
-
-}
-
 void VisibilityMatrixBuilder::getLines (vector<Line> &lines)
 {
 	int i;
@@ -169,7 +166,7 @@ void VisibilityMatrixBuilder::buildMatrix (VisibilityMatrix &visibilityMatrix, c
 
 				if (globalIndices(0) >= global.maxH () ||
 						globalIndices(1) >= global.maxK ())
-					NODE_ERROR ("Local region is out of global. Trimming view. Possible Errors");
+					ROS_ERROR ("Local region is out of global. Trimming view. Possible Errors");
 				else
 					visibilityMatrix(globalIndices(0),
 									 globalIndices(1)) = 1;

@@ -22,7 +22,6 @@ void OptimizationNode::initParams ()
 	mapData.resolution = globalRegion.cellSize;
 	mapData.width = globalRegion.maxK ();
 	mapData.height = globalRegion.maxH ();
-
 }
 
 void OptimizationNode::initROS ()
@@ -88,7 +87,6 @@ void OptimizationNode::publishRviz (const VisibilityMatrix &matrix)
 int OptimizationNode::actions ()
 {
 	if (builder.isReady () && !builder.hasComputed ()) {
-		visibilityMatrix.resize (0,0);
 		builder.compute (visibilityMatrix);
 		publishRviz (visibilityMatrix);
 	}
