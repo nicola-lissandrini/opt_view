@@ -20,34 +20,9 @@
 #define CENTER_PT_INDEX (POINTS_NO - 1)
 
 typedef Eigen::Vector3d Line;
-typedef Eigen::Triplet<u_int8_t> Tripletui;
-typedef Eigen::SparseMatrix<u_int8_t> Sparseui;
+typedef Eigen::Triplet<int8_t> Tripleti;
+typedef Eigen::SparseMatrix<int8_t> Sparsei;
 
-class VisibilityMatrix
-{
-	std::vector<Tripletui> elements;
-
-	int matrixRows;
-	int matrixCols;
-
-public:
-	VisibilityMatrix () {}
-
-	void clear ();
-	void resize (int rows, int cols);
-	void set (int i, int j);
-	Tripletui getElement (int i) const;
-	void toSparse (Sparseui &sparse) const;
-	int rows () const {
-		return matrixRows;
-	}
-	int cols () const {
-		return matrixCols;
-	}
-	int count () const {
-		return elements.size ();
-	}
-};
 
 struct Region
 {
@@ -64,7 +39,40 @@ struct Region
 	Eigen::Vector2d worldEnd() const;
 };
 
+class VisibilityMatrix
+{
+	std::vector<Tripleti> elements;
+	Region region;
+
+public:
+	VisibilityMatrix ()	{}
+
+	VisibilityMatrix (const Sparsei &sparse);
+
+	void clear ();
+	void set (int i, int j, u_int8_t val = 1);
+	const Tripleti &getElement (int i) const;
+	void toSparse (Sparsei &sparse) const;
+	void setRegion (const Region &newRegion);
+	const Region &getRegion () const {
+		return region;
+	}
+	int rows () const {
+		return region.maxH ();
+	}
+	int cols () const {
+		return region.maxK ();
+	}
+	int count () const {
+		return elements.size ();
+	}
+
+
+	VisibilityMatrix operator +(const VisibilityMatrix &other);
+};
+
 Region paramRegion (XmlRpc::XmlRpcValue &param);
+void visibilityToOccupancyMsg (const VisibilityMatrix &matrix, nav_msgs::OccupancyGrid &rvizMatrix);
 
 class VisibilityMatrixBuilder
 {

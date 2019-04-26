@@ -1,5 +1,6 @@
 visibility_matrix_builder:
   rate: 20
+  publish_rviz: false
   cell_size: 0.2
   global_region:
     x_min: -10

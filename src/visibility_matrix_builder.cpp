@@ -18,25 +18,46 @@ Region paramRegion (XmlRpcValue &param)
 	return ret;
 }
 
-void VisibilityMatrix::toSparse (Sparseui &sparse) const  {
+void VisibilityMatrix::toSparse (Sparsei &sparse) const  {
+	sparse.resize (rows (), cols ());
 	sparse.setFromTriplets (elements.begin (), elements.end ());
+}
+
+void VisibilityMatrix::setRegion (const Region &newRegion) {
+	region = newRegion;
+}
+
+VisibilityMatrix VisibilityMatrix::operator + (const VisibilityMatrix &other)
+{
+	Sparsei selfSparse, otherSparse, resultSparse;
+
+	this->toSparse (selfSparse);
+	other.toSparse (otherSparse);
+
+	resultSparse = selfSparse + otherSparse;
+
+	VisibilityMatrix ret(resultSparse);
+	ret.setRegion (region);
+	return ret;
+}
+
+VisibilityMatrix::VisibilityMatrix (const Sparsei &sparse)
+{
+	for (int k = 0; k <	sparse.outerSize (); k++) {
+		for (Sparsei::InnerIterator it(sparse, k); it; ++it)
+			set (it.row (), it.col(), it.value ());
+	}
 }
 
 void VisibilityMatrix::clear() {
 	elements.clear ();
 }
 
-void VisibilityMatrix::resize (int rows, int cols)
-{
-	matrixRows = rows;
-	matrixCols = cols;
+void VisibilityMatrix::set (int i, int j, u_int8_t val) {
+	elements.push_back (Tripleti (i, j, val));
 }
 
-void VisibilityMatrix::set (int i, int j) {
-	elements.push_back (Tripletui (i, j, 1));
-}
-
-Tripletui VisibilityMatrix::getElement (int i) const {
+const Tripleti &VisibilityMatrix::getElement(int i) const {
 	return elements[i];
 }
 
@@ -201,7 +222,8 @@ void VisibilityMatrixBuilder::compute (VisibilityMatrix &visibilityMatrix)
 {
 	vector<Line> lines;
 
-	visibilityMatrix.resize (global.maxH (), global.maxK ());
+	visibilityMatrix.clear ();
+	visibilityMatrix.setRegion (global);
 	getLines (lines);
 	buildMatrix (visibilityMatrix, lines);
 
@@ -216,3 +238,26 @@ bool VisibilityMatrixBuilder::hasComputed() {
 	return computed;
 }
 
+
+void visibilityToOccupancyMsg(const VisibilityMatrix &matrix, nav_msgs::OccupancyGrid &rvizMatrix)
+{
+	nav_msgs::MapMetaData mapData;
+
+	mapData.map_load_time = ros::Time::now ();
+	mapData.resolution = matrix.getRegion ().cellSize;
+	mapData.width = matrix.cols ();
+	mapData.height = matrix.rows ();
+	mapData.origin.position.x = matrix.getRegion ().rangeMin(0);
+	mapData.origin.position.y = matrix.getRegion ().rangeMin(1);
+
+	rvizMatrix.header.seq = 0;
+	rvizMatrix.header.stamp = ros::Time::now ();
+	rvizMatrix.header.frame_id = "map";
+	rvizMatrix.info = mapData;
+	rvizMatrix.data = vector<int8_t> (matrix.rows () * matrix.cols(), 0);
+
+	for (int i = 0; i < matrix.count (); i++) {
+		Tripleti triplet = matrix.getElement (i);
+		rvizMatrix.data[triplet.row () * matrix.cols () + triplet.col ()] = 33 * triplet.value ();
+	}
+}

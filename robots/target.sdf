@@ -54,8 +54,8 @@
 		<plugin name="target_trajectory" filename="libtarget_trajectory.so">
 			<link>target_base_link</link>
 			<initial_position x="1" y="0" z="0" />
-			<speed>00</speed>
-			<amplitude>0.5</amplitude>
+			<speed>0</speed>
+			<amplitude>0</amplitude>
 			<frequency>0.4</frequency>
 			<delay>3</delay>
 		</plugin>

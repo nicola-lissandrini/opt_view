@@ -13,8 +13,7 @@ class VisibilityMatrixBuilderNode : public PdRosNode
 	ros::Publisher sparseMatrixPub;
 	VisibilityMatrixBuilder builder;
 	VisibilityMatrix visibilityMatrix;
-	nav_msgs::MapMetaData mapData;
-
+	bool doPublishRviz;
 
 	int actions ();
 	void initParams ();
@@ -23,7 +22,7 @@ class VisibilityMatrixBuilderNode : public PdRosNode
 	void publishSparseMsg(const VisibilityMatrix &matrix);
 
 public:
-	VisibilityMatrixBuilderNode();
+	VisibilityMatrixBuilderNode ();
 
 	void projViewCallback (const opt_view::ProjectedView &newProjView);
 	void cameraOdomCallback (const nav_msgs::Odometry &odom);
