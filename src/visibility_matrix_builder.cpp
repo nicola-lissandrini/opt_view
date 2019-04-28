@@ -23,6 +23,25 @@ void VisibilityMatrix::toSparse (Sparsei &sparse) const  {
 	sparse.setFromTriplets (elements.begin (), elements.end ());
 }
 
+void VisibilityMatrix::fromMsg(const opt_view::SparseMatrixInt &matrixMsg)
+{
+	region.cellSize = matrixMsg.cellSize;
+	region.rangeMin = Vector2d (matrixMsg.origin.x,
+								matrixMsg.origin.y);
+	region.rangeMax = region.rangeMin + Vector2d (matrixMsg.cellSize * matrixMsg.cols,
+												  matrixMsg.cellSize * matrixMsg.rows);
+	region.pose = Translation2d (0,0) * Rotation2Dd(0);
+
+	clear ();
+	setRegion (region);
+
+	for (int i = 0; i < matrixMsg.elements.size (); i++) {
+		opt_view::TripletInt curr = matrixMsg.elements[i];
+		set (curr.i, curr.j, curr.val);
+	}
+}
+
+
 void VisibilityMatrix::setRegion (const Region &newRegion) {
 	region = newRegion;
 }

@@ -44,7 +44,7 @@ generate_messages(
 
 catkin_package (CATKIN_DEPENDS message_runtime gazebo_ros)
 
-add_library (pd_lib SHARED src/pd_rosnode.cpp)
+add_library (pd_lib SHARED src/pd_rosnode.cpp src/kalman_filter.cpp)
 target_link_libraries (pd_lib ${catkin_LIBRARIES})
 add_dependencies(pd_lib ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
@@ -67,6 +67,10 @@ add_dependencies(visibility_matrix_builder ${${PROJECT_NAME}_EXPORTED_TARGETS} $
 add_executable (optimization src/optimization_node.cpp src/optimization.cpp src/visibility_matrix_builder.cpp)
 target_link_libraries (optimization ${catkin_LIBRARIES} pd_lib)
 add_dependencies(optimization ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable (loss_probability src/loss_probability_node.cpp src/loss_probability.cpp src/visibility_matrix_builder.cpp)
+target_link_libraries (loss_probability ${catkin_LIBRARIES} pd_lib)
+add_dependencies(loss_probability ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 link_directories(${GAZEBO_LIBRARY_DIRS})

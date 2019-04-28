@@ -82,7 +82,8 @@
     </node>
 
     <group if="$(arg leader)">
-      <!-- Loss probability prediction -->
+       <rosparam file="$(find opt_view)/config/loss_probability.yaml" command="load" />
+       <node name="loss_probability"  pkg="opt_view" type="loss_probability" output="screen" />
     </group>
     <group unless="$(arg leader)">
       <rosparam file="$(find opt_view)/config/optimization.yaml" command="load" />

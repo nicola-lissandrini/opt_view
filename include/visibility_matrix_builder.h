@@ -5,6 +5,7 @@
 
 #include <eigen_conversions/eigen_msg.h>
 #include <opt_view/ProjectedView.h>
+#include <opt_view/SparseMatrixInt.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Vector3.h>
 #include <nav_msgs/Odometry.h>
@@ -53,6 +54,7 @@ public:
 	void set (int i, int j, u_int8_t val = 1);
 	const Tripleti &getElement (int i) const;
 	void toSparse (Sparsei &sparse) const;
+	void fromMsg (const opt_view::SparseMatrixInt &matrixMsg);
 	void setRegion (const Region &newRegion);
 	const Region &getRegion () const {
 		return region;

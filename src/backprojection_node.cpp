@@ -124,11 +124,8 @@ void BackProjection::updateParams (const sensor_msgs::CameraInfo &cameraInfo)
 		for (int j = 0; j < intrinsicMatrix.cols () ; j++) {
 			intrinsicMatrix(i,j) = cameraInfo.P[i * intrinsicMatrix.cols () + j];
 		}
-		// Ignore garbage in the 4-th column
-		//intrinsicMatrix(i, 3) = 0;
 	}
 
-	//intrinsicMatrix << 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0;
 	pxWidth =cameraInfo.width;
 	pxHeight = cameraInfo.height;
 	updatePointsToProject (pxWidth, pxHeight);

@@ -57,6 +57,20 @@ Eigen::Isometry3d paramPoseEigen (XmlRpcValue &param)
 	return tr * rot;
 }
 
+// Row major
+Eigen::MatrixXd paramMatrix (XmlRpcValue &param, int rows, int cols)
+{
+	Eigen::MatrixXd ret;
+
+	ret.resize (rows, cols);
+	for (int i = 0; i < rows; i++) {
+		for (int j = 0; j < cols; j++)
+			ret(i,j) = paramDouble (param[i*cols + j]);
+	}
+
+	return ret;
+}
+
 PdRosNode::PdRosNode (string _name):
 	name(_name)
 {

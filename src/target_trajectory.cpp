@@ -51,7 +51,7 @@ void TargetTrajectory::OnUpdate ()
 {
 	Pose3d currPose;
 	Quaterniond currOrientation = Quaterniond::Identity;
-	Vector3d currPosition;
+	Vector3d currPosition, currVelocity;
 	common::Time time = model->GetWorld ()->SimTime ();
 	double t = time.Double ();
 
@@ -64,10 +64,15 @@ void TargetTrajectory::OnUpdate ()
 				params.speed*t,
 				params.amplitude * sin (params.frequency * 2 * M_PI * t),
 				0);
+	currVelocity.Set (
+				params.speed,
+				params.amplitude * 2 * M_PI * params.frequency * cos (params.frequency * 2 * M_PI * t),
+				0);
 
 	currPose.Set (params.initialPosition + currPosition, currOrientation);
 
 	model->SetRelativePose (currPose);
+	model->SetLinearVel (currVelocity);
 }
 
 

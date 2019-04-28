@@ -6,6 +6,6 @@ optimization:
   rotation_topic: /uavs/formation/update
   rviz_topic: occupancy_grid
   imbalance_topic: imbalance_factor
-  rviz_publish: true
+  rviz_publish: false
   angle_step: 0.01
   proportional_gain: 0.013

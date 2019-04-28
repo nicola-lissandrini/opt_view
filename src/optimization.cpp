@@ -46,34 +46,15 @@ void Optimization::setPose (const Isometry3d &cameraPose3D)
 }
 
 void Optimization::setSelfFromMsg (const opt_view::SparseMatrixInt &matrixMsg) {
-	setFromMsg (selfVisibility, matrixMsg);
+	selfVisibility.fromMsg (matrixMsg);
 	flags.set ("self_set");
 }
 
 void Optimization::setNeighborFromMsg (const opt_view::SparseMatrixInt &matrixMsg) {
-	setFromMsg (neighborVisibility, matrixMsg);
+	neighborVisibility.fromMsg (matrixMsg);
 	flags.set ("neighbor_set");
 }
 
-void Optimization::setFromMsg (VisibilityMatrix &visibility, const opt_view::SparseMatrixInt &matrixMsg)
-{
-	Region region;
-
-	region.cellSize = matrixMsg.cellSize;
-	region.rangeMin = Vector2d (matrixMsg.origin.x,
-								matrixMsg.origin.y);
-	region.rangeMax = region.rangeMin + Vector2d (matrixMsg.cellSize * matrixMsg.cols,
-												  matrixMsg.cellSize * matrixMsg.rows);
-	region.pose = Translation2d (0,0) * Rotation2Dd(0);
-
-	visibility.clear ();
-	visibility.setRegion (region);
-
-	for (int i = 0; i < matrixMsg.elements.size (); i++) {
-		opt_view::TripletInt curr = matrixMsg.elements[i];
-		visibility.set (curr.i, curr.j, curr.val);
-	}
-}
 
 void Optimization::computeTotalVisibility () {
 	totalVisibility = selfVisibility + neighborVisibility;

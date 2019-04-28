@@ -19,6 +19,7 @@ void VisibilityMatrixBuilderNode::initParams ()
 	builder.setParams (params);
 
 	doPublishRviz = bool (params["publish_rviz"]);
+	agentId = int (params["agent_id"]);
 }
 
 void VisibilityMatrixBuilderNode::initROS ()
@@ -78,6 +79,7 @@ void VisibilityMatrixBuilderNode::publishSparseMsg (const VisibilityMatrix &matr
 	sparseMsg.origin.x = matrix.getRegion ().rangeMin(0);
 	sparseMsg.origin.y = matrix.getRegion ().rangeMin(1);
 	sparseMsg.origin.z = 0;
+	sparseMsg.agentId = agentId;
 
 	sparseMsg.elements.resize (matrix.count ());
 	for (int i = 0; i < matrix.count (); i++) {

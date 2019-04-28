@@ -7,7 +7,7 @@
 	<arg name="log_file" default="$(arg mav_name)" />
 	<arg name="debug" default="false"/>
 	<arg name="gui" default="true"/>
-	<arg name="paused" default="true"/>
+	<arg name="paused" default="false"/>
 	<arg name="verbose" default="false"/>
 
 	<!-- Init Gazebo -->

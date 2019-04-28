@@ -14,6 +14,7 @@ class VisibilityMatrixBuilderNode : public PdRosNode
 	VisibilityMatrixBuilder builder;
 	VisibilityMatrix visibilityMatrix;
 	bool doPublishRviz;
+	int agentId;
 
 	int actions ();
 	void initParams ();
