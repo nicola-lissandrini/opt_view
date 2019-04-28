@@ -18,7 +18,7 @@ void LossProbability::initParams (XmlRpcValue &params)
 	statePrior = paramMatrix (params["prior"]["state"], statePrior.rows (), 1);
 	errorPrior = paramMatrix (params["prior"]["error"], errorPrior.rows (), errorPrior.cols ());
 
-	 model = buildModel (params["kalman_model"]);
+	model = buildModel (params["kalman_model"]);
 
 	kalman.setModel (model);
 	kalman.initFilter (statePrior, errorPrior);
@@ -69,7 +69,7 @@ void LossProbability::updateVisibility (const opt_view::SparseMatrixInt &matrixM
 	flags.set (matrixMsg.agentId);
 }
 
-void LossProbability::updatePose (const Isometry3d &newPose, const Vector2d &vel)
+void LossProbability::updateTargetPose (const Isometry3d &newPose, const Vector2d &vel)
 {
 	default_random_engine generator(std::chrono::system_clock::now().time_since_epoch().count());
 	normal_distribution<double> distribution(0,0.01);
@@ -78,34 +78,87 @@ void LossProbability::updatePose (const Isometry3d &newPose, const Vector2d &vel
 	poseGroundTruth = xy;
 	velGroundTruth = vel;
 
-	cout << "Noise\n" << noise << endl << endl;
+	kalman.filter (xy);
+}
 
-	kalman.filter (xy + noise);
+void LossProbability::sumVisibilityMatrices (VisibilityMatrix &totalView)
+{
+	totalView = visibilityMatrices[0];
+	for (int i = 1; i < agentsNo; i++) {
+		totalView = totalView + visibilityMatrices[i];
+	}
+}
+
+double normPdf (const Eigen::VectorXd &x, const Eigen::VectorXd &mean, const Eigen::MatrixXd &sigma)
+{
+	double n = x.rows();
+	double sqrt2pi = std::sqrt(2 * M_PI);
+	double quadform  = (x - mean).transpose() * sigma.inverse() * (x - mean);
+	double norm = std::pow(sqrt2pi, - n) *
+			std::pow(sigma.determinant(), - 0.5);
+
+	return norm * exp(-0.5 * quadform);
+}
+#define POS_VAL(v) (Vector2d (v(0), v(2)))
+#define POS_ERR(e) (Matrix2d (e(0,0), e(0,2), e(2, 0), e(2,2)))
+
+Matrix2d getPosErr (const MatrixXd &err) {
+	Matrix2d ret;
+	ret << err(0,0), err(0, 2),
+		   err(2,0), err(2, 2);
+	return ret;
+}
+
+double LossProbability::computeProbability (const VisibilityMatrix &totalView, const Measure &prediction)
+{
+	Region region = totalView.getRegion ();
+	Vector2d currPos;
+	int h, k;
+	double visibleProbability = 0;
+	debugView.clear ();
+	debugView.setRegion (region);
+	for (int i = 0; i < totalView.count (); i++) {
+		h = totalView.getElement (i).row ();
+		k = totalView.getElement (i).col ();
+		currPos = region(h, k);
+		double val = normPdf (currPos, POS_VAL (prediction.value),
+										getPosErr(prediction.error));
+
+		visibleProbability += val * region.cellSize*region.cellSize;
+		//if (val > 0.01) {
+			cout << currPos(0) << " " << currPos(1) << "\n" << val << endl << endl;
+			cout << prediction.value << endl << prediction.error << endl;
+		//}
+		debugView.set (h, k, round (val * 100000));
+	}
+	if (visibleProbability > 1)
+		visibleProbability = 1;
+	Vector2i ii = region.indicesFromWorld (POS_VAL (prediction.value));
+	debugView.set (ii(0), ii(1), 100);
+
+
+	return 1 - visibleProbability;
+}
+
+LossProbability::LossProbability() {
 }
 
 double LossProbability::compute ()
 {
-	Measure prediction, filtered;
+	Measure prediction;
+	double probability;
 
 	if (!isReady ())
 		return -1;
 
 	prediction = kalman.predict (predictionInterval);
-	filtered = kalman.getFiltered ();
-
-	FILE *fp = fopen ("/home/nicola/prediction","w");
-	fprintf (fp, "%lg, %lg\n%lg, %lg\n%lg, %lg\n", prediction.value(0), prediction.value(2),
-												   prediction.error(0,0), prediction.error(0,2),
-												   prediction.error(2,0), prediction.error(2,2));
-
-	fclose (fp);
-	cout << "Filtered\n" << filtered.value << "\nFiltered error\n" << filtered.error << endl;
-	cout << "Predicted\n" << prediction.value << "\nPredicted error\n" << prediction.error << endl;
-
+	totalView.clear ();
+	sumVisibilityMatrices (totalView);
+	probability = computeProbability (totalView, prediction);
 
 	flags.setProcessed ();
 
-	return 0;
+	return probability;
 }
 
 bool LossProbability::isReady() {

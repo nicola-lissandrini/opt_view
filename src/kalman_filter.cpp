@@ -2,7 +2,6 @@
 #include "common.h"
 #include <unsupported/Eigen/MatrixFunctions>
 
-
 using namespace Eigen;
 
 KalmanModel::KalmanModel (Eigen::MatrixXd _A, Eigen::MatrixXd _B, Eigen::MatrixXd _C, Eigen::MatrixXd _D, double _sampleTime)
@@ -46,14 +45,13 @@ void KalmanFilter::initFilter (VectorXd statePrior, MatrixXd errorPrior)
 Measure KalmanFilter::predict (int steps)
 {
 	Measure prediction;
-	MatrixXd Apow = model.A.pow (steps);
 
 	prediction.value = filtered.value;
 	prediction.error = filtered.error;
 
 	for (int k = 0; k < steps; k++) {
-		prediction.value = Apow * prediction.value;
-		prediction.error = Apow * prediction.error * Apow.transpose () + model.Q;
+		prediction.value = model.A * prediction.value;
+		prediction.error = model.A * prediction.error * model.A.transpose () + model.Q;
 	}
 
 	return prediction;
@@ -88,7 +86,7 @@ Measure KalmanFilter::filter (VectorXd newMeasure)
 	return filtered;
 }
 
-Measure KalmanFilter::getFiltered() {
+Measure KalmanFilter::getFiltered() const {
 	return filtered;
 }
 

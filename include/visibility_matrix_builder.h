@@ -38,6 +38,10 @@ struct Region
 	Eigen::Vector2i indicesFromWorld (Eigen::Vector2d pt) const;
 	Eigen::Vector2d worldStart() const;
 	Eigen::Vector2d worldEnd() const;
+
+	Region () {
+		pose = Eigen::Translation2d(0,0) * Eigen::Rotation2Dd(0);
+	}
 };
 
 class VisibilityMatrix

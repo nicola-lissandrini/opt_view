@@ -30,27 +30,43 @@ void LossProbabilityNode::initROS ()
 		visibilityMatrixSubs[i] = nh.subscribe (topicPre + to_string (i) + matrixTopicPost, 1, &LossProbabilityNode::visibilityCallback, this);
 	targetPoseSub = nh.subscribe (targetPoseTopic, 1, &LossProbabilityNode::targetPoseCallback, this);
 	probabilityPub = nh.advertise<std_msgs::Float64> (probabilityTopic, 1);
+	matrixPub = nh.advertise<nav_msgs::OccupancyGrid> ("total_view", 1);
 }
 
-void LossProbabilityNode::visibilityCallback (const opt_view::SparseMatrixInt &visibility)
+void LossProbabilityNode::publishRviz (const VisibilityMatrix &matrix)
 {
+	nav_msgs::OccupancyGrid rvizMatrix;
+
+	visibilityToOccupancyMsg (matrix, rvizMatrix);
+
+	matrixPub.publish (rvizMatrix);
+}
+
+void LossProbabilityNode::visibilityCallback (const opt_view::SparseMatrixInt &visibility) {
 	lossProbability.updateVisibility (visibility);
 }
 
-void LossProbabilityNode::targetPoseCallback (const nav_msgs::Odometry &newPose) {
+void LossProbabilityNode::targetPoseCallback (const nav_msgs::Odometry &newPose)
+{
 	Isometry3d eigenPose;
 	Vector3d eigenVel;
 
 	tf::poseMsgToEigen (newPose.pose.pose, eigenPose);
 	tf::vectorMsgToEigen (newPose.twist.twist.linear, eigenVel);
 
-	lossProbability.updatePose (eigenPose, eigenVel.head<2> ());
+	lossProbability.updateTargetPose (eigenPose, eigenVel.head<2> ());
 }
 
 int LossProbabilityNode::actions ()
 {
-	if (lossProbability.isReady ())
-		lossProbability.compute ();
+	if (lossProbability.isReady ()) {
+		std_msgs::Float64 probMsg;
+
+		probMsg.data = lossProbability.compute ();
+
+		probabilityPub.publish (probMsg);
+		publishRviz (lossProbability.getTotalView ());
+	}
 
 	return 0;
 }

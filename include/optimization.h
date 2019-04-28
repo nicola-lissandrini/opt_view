@@ -26,6 +26,7 @@ class Optimization
 	Eigen::Isometry2d cameraPose;
 	VisibilityMatrix selfVisibility, neighborVisibility;
 	VisibilityMatrix totalVisibility, overlappingVisibility;
+	double lossProbability;
 
 	ReadyFlags<std::string> flags;
 	struct Params {
@@ -51,6 +52,7 @@ public:
 	void setPose (const Eigen::Isometry3d &cameraPose3D);
 	void setSelfFromMsg (const opt_view::SparseMatrixInt &matrixMsg);
 	void setNeighborFromMsg (const opt_view::SparseMatrixInt &matrixMsg);
+	void setLossProbability (double newLossProbability);
 	int optimize ();
 
 	bool isReady () const {
@@ -98,6 +100,7 @@ public:
 	void selfMatrixCallback (const opt_view::SparseMatrixInt &matrix);
 	void neighborMatrixCallback (const opt_view::SparseMatrixInt &matrix);
 	void cameraOdomCallback (const nav_msgs::Odometry &odom);
+	void lossProbabilityCallback (const std_msgs::Float64 &lossMsg);
 };
 
 #endif // OPTIMIZATION_NODE_H

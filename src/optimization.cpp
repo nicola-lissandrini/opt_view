@@ -8,7 +8,8 @@ using namespace XmlRpc;
 using namespace Eigen;
 
 
-Optimization::Optimization()
+Optimization::Optimization():
+	lossProbability(0)
 {
 	flags.addFlag ("pose_set");
 	flags.addFlag ("self_set");
@@ -55,6 +56,9 @@ void Optimization::setNeighborFromMsg (const opt_view::SparseMatrixInt &matrixMs
 	flags.set ("neighbor_set");
 }
 
+void Optimization::setLossProbability(double newLossProbability) {
+	lossProbability = newLossProbability;
+}
 
 void Optimization::computeTotalVisibility () {
 	totalVisibility = selfVisibility + neighborVisibility;

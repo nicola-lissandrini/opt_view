@@ -49,7 +49,7 @@ public:
 
 	Measure filter(Eigen::VectorXd newMeasure);
 
-	Measure getFiltered ();
+	Measure getFiltered () const;
 
 };
 

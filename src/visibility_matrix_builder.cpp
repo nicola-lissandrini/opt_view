@@ -266,8 +266,8 @@ void visibilityToOccupancyMsg(const VisibilityMatrix &matrix, nav_msgs::Occupanc
 	mapData.resolution = matrix.getRegion ().cellSize;
 	mapData.width = matrix.cols ();
 	mapData.height = matrix.rows ();
-	mapData.origin.position.x = matrix.getRegion ().rangeMin(0);
-	mapData.origin.position.y = matrix.getRegion ().rangeMin(1);
+	mapData.origin.position.x = matrix.getRegion ().rangeMin(1);
+	mapData.origin.position.y = matrix.getRegion ().rangeMin(0);
 
 	rvizMatrix.header.seq = 0;
 	rvizMatrix.header.stamp = ros::Time::now ();
@@ -277,6 +277,6 @@ void visibilityToOccupancyMsg(const VisibilityMatrix &matrix, nav_msgs::Occupanc
 
 	for (int i = 0; i < matrix.count (); i++) {
 		Tripleti triplet = matrix.getElement (i);
-		rvizMatrix.data[triplet.row () * matrix.cols () + triplet.col ()] = 33 * triplet.value ();
+		rvizMatrix.data[triplet.row () * matrix.cols () + triplet.col ()] = triplet.value ();
 	}
 }

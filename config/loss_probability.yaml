@@ -2,7 +2,7 @@ loss_probability:
   rate: 20
   multiagent_topics_pre: /uavs/agent_
   visibility_matrix_topic_post: /visibility_matrix
-  probability_topic: /uavs/leader/target_loss_probability
+  probability_topic: target_loss_probability
   target_pose_topic: /target/odometry
 
   agents_no: 5
@@ -14,6 +14,6 @@ loss_probability:
             0, 0, 1, 0,
             0, 0, 0, 1]
   kalman_model:
-    sample_time: 0.05
-    beta: 5
-    sigma: 0.01
+    sample_time: 0.01
+    beta: 50
+    sigma: 0.1

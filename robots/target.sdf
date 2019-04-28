@@ -55,9 +55,9 @@
 			<link>target_base_link</link>
 			<initial_position x="1" y="0" z="0" />
 			<speed>0.0</speed>
-			<amplitude>1</amplitude>
-			<frequency>0.15</frequency>
-			<delay>10</delay>
+			<amplitude>0.5</amplitude>
+			<frequency>0.5</frequency>
+			<delay>1</delay>
 		</plugin>
 	</model>
 </sdf>

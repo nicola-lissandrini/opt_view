@@ -17,15 +17,18 @@ class LossProbability
 	KalmanModel model;
 	KalmanFilter kalman;
 	std::vector<VisibilityMatrix> visibilityMatrices;
+	VisibilityMatrix totalView, debugView;
 	Eigen::Vector2d poseGroundTruth;
 	Eigen::Vector2d velGroundTruth;
 	int agentsNo;
 	double predictionInterval;
 
 	KalmanModel buildModel (XmlRpc::XmlRpcValue &params);
+	void sumVisibilityMatrices (VisibilityMatrix &totalView);
+	double computeProbability (const VisibilityMatrix &totalView, const Measure &prediction);
 
 public:
-	LossProbability () {}
+	LossProbability ();
 
 	void initParams (XmlRpc::XmlRpcValue &params);
 	void updateVisibility (const opt_view::SparseMatrixInt &matrixMsg);
@@ -33,9 +36,13 @@ public:
 	double compute();
 	
 	bool isReady ();
-	void updatePose(const Eigen::Isometry3d &newPose, const Eigen::Vector2d &vel);
-	Measure getFiltered () {
+	void updateTargetPose(const Eigen::Isometry3d &newPose, const Eigen::Vector2d &vel);
+	void updateLeaderPose(const Eigen::Isometry3d &newPose);
+	Measure getFiltered () const {
 		return kalman.getFiltered ();
+	}
+	const VisibilityMatrix &getTotalView () const {
+		return debugView;
 	}
 };
 
@@ -44,12 +51,15 @@ class LossProbabilityNode: public PdRosNode
 	std::vector<ros::Subscriber> visibilityMatrixSubs;
 	ros::Subscriber targetPoseSub;
 	ros::Publisher probabilityPub;
+	ros::Publisher matrixPub;
 
 	LossProbability lossProbability;
 
 	int actions ();
 	void initParams ();
 	void initROS ();
+
+	void publishRviz(const VisibilityMatrix &matrix);
 
 public:
 	LossProbabilityNode ();
