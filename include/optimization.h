@@ -11,10 +11,6 @@
 #include <nav_msgs/Odometry.h>
 #include <map>
 
-enum OptimizationType {
-	OPTIMIZATION_CW,
-	OPTIMIZATION_CCW
-};
 
 struct OptimizationResults {
 	int imbalanceFactor;
@@ -30,9 +26,10 @@ class Optimization
 
 	ReadyFlags<std::string> flags;
 	struct Params {
-		OptimizationType type;
+		int optimizationSign;
 		double angleStep;
 		double gain;
+		double probabilityGain;
 	} params;
 
 	OptimizationResults results;
@@ -42,8 +39,10 @@ class Optimization
 	int getSpacialValue (int i, int j);
 	void computeTotalVisibility ();
 	int computeImbalanceFactor();
-	void computeOverlappingWithSpacial ();
+	void computeOverlapping ();
 	double computeStep ();
+	double getCostValue(int i, int j);
+	double getProbabilityValue();
 
 public:
 	Optimization ();
@@ -80,6 +79,7 @@ class OptimizationNode : public PdRosNode
 	ros::Subscriber selfMatrixSub;
 	ros::Subscriber neighborMatrixSub;
 	ros::Subscriber cameraOdomSub;
+	ros::Subscriber lossProbabilitySub;
 	ros::Publisher rotationStepPub;
 	ros::Publisher rvizPub;
 	ros::Publisher imbalancePub;

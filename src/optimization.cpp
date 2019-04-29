@@ -21,10 +21,10 @@ int Optimization::initParams (XmlRpcValue &rpcParams)
 	string typeStr = paramString (rpcParams["optimization_type"]);
 
 	if (typeStr == "CCW")
-		params.type = OPTIMIZATION_CCW;
+		params.optimizationSign = 1;
 	else {
 		if (typeStr == "CW") {
-			params.type = OPTIMIZATION_CW;
+			params.optimizationSign = -1;
 		} else {
 			return -1;
 		}
@@ -32,6 +32,7 @@ int Optimization::initParams (XmlRpcValue &rpcParams)
 
 	params.angleStep = paramDouble (rpcParams["angle_step"]);
 	params.gain = paramDouble (rpcParams["proportional_gain"]);
+	params.probabilityGain = paramDouble(rpcParams["loss_probability_gain"]);
 
 	return 0;
 }
@@ -76,9 +77,17 @@ int Optimization::getSpacialValue (int i, int j)
 		return -1;
 }
 
-void Optimization::computeOverlappingWithSpacial ()
+double Optimization::getProbabilityValue () {
+	return params.optimizationSign * params.probabilityGain * lossProbability;
+}
+
+double Optimization::getCostValue (int i, int j) {
+	return getSpacialValue (i, j) + getProbabilityValue ();
+}
+
+void Optimization::computeOverlapping ()
 {
-	int spacialValue;
+	int costElementValue;
 
 	overlappingVisibility.clear ();
 	overlappingVisibility.setRegion (totalVisibility.getRegion ());
@@ -87,8 +96,8 @@ void Optimization::computeOverlappingWithSpacial ()
 		const Tripleti &curr = totalVisibility.getElement (i);
 
 		if (curr.value () > 1) {
-			spacialValue = getSpacialValue (curr.row (), curr.col ());
-			overlappingVisibility.set (curr.row (), curr.col (), spacialValue);
+			costElementValue = getCostValue (curr.row (), curr.col ());
+			overlappingVisibility.set (curr.row (), curr.col (), costElementValue);
 		}
 	}
 }
@@ -97,7 +106,7 @@ int Optimization::computeImbalanceFactor ()
 {
 	int imbalanceFactor = 0;
 
-	computeOverlappingWithSpacial ();
+	computeOverlapping ();
 
 	for (int i = 0; i < overlappingVisibility.count (); i++) {
 		imbalanceFactor += overlappingVisibility.getElement (i).value ();
