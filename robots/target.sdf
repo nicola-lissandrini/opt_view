@@ -56,8 +56,8 @@
 			<initial_position x="1" y="0" z="0" />
 			<speed>0.0</speed>
 			<amplitude>0.5</amplitude>
-			<frequency>0.5</frequency>
-			<delay>1</delay>
+			<frequency>0.4</frequency>
+			<delay>10</delay>
 		</plugin>
 	</model>
 </sdf>

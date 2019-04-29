@@ -38,7 +38,7 @@ class Optimization
 
 	int getSpacialValue (int i, int j);
 	void computeTotalVisibility ();
-	int computeImbalanceFactor();
+	double computeImbalanceFactor();
 	void computeOverlapping ();
 	double computeStep ();
 	double getCostValue(int i, int j);

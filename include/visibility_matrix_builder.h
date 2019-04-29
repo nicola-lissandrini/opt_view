@@ -21,8 +21,8 @@
 #define CENTER_PT_INDEX (POINTS_NO - 1)
 
 typedef Eigen::Vector3d Line;
-typedef Eigen::Triplet<int8_t> Tripleti;
-typedef Eigen::SparseMatrix<int8_t> Sparsei;
+typedef Eigen::Triplet<double> Tripletd;
+typedef Eigen::SparseMatrix<double> Sparsed;
 
 
 struct Region
@@ -46,18 +46,18 @@ struct Region
 
 class VisibilityMatrix
 {
-	std::vector<Tripleti> elements;
+	std::vector<Tripletd> elements;
 	Region region;
 
 public:
 	VisibilityMatrix ()	{}
 
-	VisibilityMatrix (const Sparsei &sparse);
+	VisibilityMatrix (const Sparsed &sparse);
 
 	void clear ();
-	void set (int i, int j, u_int8_t val = 1);
-	const Tripleti &getElement (int i) const;
-	void toSparse (Sparsei &sparse) const;
+	void set (int i, int j, double val = 1);
+	const Tripletd &getElement (int i) const;
+	void toSparse (Sparsed &sparse) const;
 	void fromMsg (const opt_view::SparseMatrixInt &matrixMsg);
 	void setRegion (const Region &newRegion);
 	const Region &getRegion () const {

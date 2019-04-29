@@ -6,7 +6,8 @@ optimization:
   rotation_topic: /uavs/formation/update
   rviz_topic: occupancy_grid
   imbalance_topic: imbalance_factor
+  loss_probability_topic: /uavs/agent_0/target_loss_probability
   rviz_publish: false
   angle_step: 0.01
   proportional_gain: 0.013
-  probability_gain: 0.1
+  loss_probability_gain: 0.5

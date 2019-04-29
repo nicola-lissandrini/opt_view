@@ -125,11 +125,7 @@ double LossProbability::computeProbability (const VisibilityMatrix &totalView, c
 										getPosErr(prediction.error));
 
 		visibleProbability += val * region.cellSize*region.cellSize;
-		//if (val > 0.01) {
-			cout << currPos(0) << " " << currPos(1) << "\n" << val << endl << endl;
-			cout << prediction.value << endl << prediction.error << endl;
-		//}
-		debugView.set (h, k, round (val * 100000));
+		debugView.set (h, k, round (val * 100));
 	}
 	if (visibleProbability > 1)
 		visibleProbability = 1;

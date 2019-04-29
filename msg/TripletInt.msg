@@ -2,4 +2,4 @@
 
 int64 i
 int64 j
-uint8 val
+float64 val

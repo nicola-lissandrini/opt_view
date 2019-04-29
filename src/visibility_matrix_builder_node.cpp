@@ -83,7 +83,7 @@ void VisibilityMatrixBuilderNode::publishSparseMsg (const VisibilityMatrix &matr
 
 	sparseMsg.elements.resize (matrix.count ());
 	for (int i = 0; i < matrix.count (); i++) {
-		Tripleti curr = matrix.getElement (i);
+		Tripletd curr = matrix.getElement (i);
 		sparseMsg.elements[i].i = curr.row ();
 		sparseMsg.elements[i].j = curr.col ();
 		sparseMsg.elements[i].val = curr.value ();

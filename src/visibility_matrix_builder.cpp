@@ -18,7 +18,7 @@ Region paramRegion (XmlRpcValue &param)
 	return ret;
 }
 
-void VisibilityMatrix::toSparse (Sparsei &sparse) const  {
+void VisibilityMatrix::toSparse (Sparsed &sparse) const  {
 	sparse.resize (rows (), cols ());
 	sparse.setFromTriplets (elements.begin (), elements.end ());
 }
@@ -48,7 +48,7 @@ void VisibilityMatrix::setRegion (const Region &newRegion) {
 
 VisibilityMatrix VisibilityMatrix::operator + (const VisibilityMatrix &other)
 {
-	Sparsei selfSparse, otherSparse, resultSparse;
+	Sparsed selfSparse, otherSparse, resultSparse;
 
 	this->toSparse (selfSparse);
 	other.toSparse (otherSparse);
@@ -60,10 +60,10 @@ VisibilityMatrix VisibilityMatrix::operator + (const VisibilityMatrix &other)
 	return ret;
 }
 
-VisibilityMatrix::VisibilityMatrix (const Sparsei &sparse)
+VisibilityMatrix::VisibilityMatrix (const Sparsed &sparse)
 {
 	for (int k = 0; k <	sparse.outerSize (); k++) {
-		for (Sparsei::InnerIterator it(sparse, k); it; ++it)
+		for (Sparsed::InnerIterator it(sparse, k); it; ++it)
 			set (it.row (), it.col(), it.value ());
 	}
 }
@@ -72,11 +72,11 @@ void VisibilityMatrix::clear() {
 	elements.clear ();
 }
 
-void VisibilityMatrix::set (int i, int j, u_int8_t val) {
-	elements.push_back (Tripleti (i, j, val));
+void VisibilityMatrix::set (int i, int j, double val) {
+	elements.push_back (Tripletd (i, j, val));
 }
 
-const Tripleti &VisibilityMatrix::getElement(int i) const {
+const Tripletd &VisibilityMatrix::getElement(int i) const {
 	return elements[i];
 }
 
@@ -276,7 +276,7 @@ void visibilityToOccupancyMsg(const VisibilityMatrix &matrix, nav_msgs::Occupanc
 	rvizMatrix.data = vector<int8_t> (matrix.rows () * matrix.cols(), 0);
 
 	for (int i = 0; i < matrix.count (); i++) {
-		Tripleti triplet = matrix.getElement (i);
+		Tripletd triplet = matrix.getElement (i);
 		rvizMatrix.data[triplet.row () * matrix.cols () + triplet.col ()] = triplet.value ();
 	}
 }

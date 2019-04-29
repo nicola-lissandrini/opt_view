@@ -78,22 +78,23 @@ int Optimization::getSpacialValue (int i, int j)
 }
 
 double Optimization::getProbabilityValue () {
-	return params.optimizationSign * params.probabilityGain * lossProbability;
+	double val = params.optimizationSign * params.probabilityGain * lossProbability;
+	return val;
 }
 
 double Optimization::getCostValue (int i, int j) {
-	return getSpacialValue (i, j) + getProbabilityValue ();
+	return double(getSpacialValue (i, j)) + getProbabilityValue ();
 }
 
 void Optimization::computeOverlapping ()
 {
-	int costElementValue;
+	double costElementValue;
 
 	overlappingVisibility.clear ();
 	overlappingVisibility.setRegion (totalVisibility.getRegion ());
 
 	for (int i = 0; i < totalVisibility.count (); i++) {
-		const Tripleti &curr = totalVisibility.getElement (i);
+		const Tripletd &curr = totalVisibility.getElement (i);
 
 		if (curr.value () > 1) {
 			costElementValue = getCostValue (curr.row (), curr.col ());
@@ -102,9 +103,9 @@ void Optimization::computeOverlapping ()
 	}
 }
 
-int Optimization::computeImbalanceFactor ()
+double Optimization::computeImbalanceFactor ()
 {
-	int imbalanceFactor = 0;
+	double imbalanceFactor = 0;
 
 	computeOverlapping ();
 
