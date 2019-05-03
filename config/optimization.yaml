@@ -10,4 +10,4 @@ optimization:
   rviz_publish: false
   angle_step: 0.01
   proportional_gain: 0.015
-  loss_probability_gain: 0.6
+  loss_probability_gain: 0.5

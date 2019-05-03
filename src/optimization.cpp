@@ -92,6 +92,7 @@ void Optimization::computeOverlapping ()
 
 	overlappingVisibility.clear ();
 	overlappingVisibility.setRegion (totalVisibility.getRegion ());
+	results.totalArea = 0;
 
 	for (int i = 0; i < totalVisibility.count (); i++) {
 		const Tripletd &curr = totalVisibility.getElement (i);
@@ -99,6 +100,10 @@ void Optimization::computeOverlapping ()
 		if (curr.value () > 1) {
 			costElementValue = getCostValue (curr.row (), curr.col ());
 			overlappingVisibility.set (curr.row (), curr.col (), costElementValue);
+		} else {
+			if (curr.value () > 0) {
+				results.totalArea++;
+			}
 		}
 	}
 }

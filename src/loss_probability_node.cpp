@@ -23,6 +23,7 @@ void LossProbabilityNode::initROS ()
 	string matrixTopicPost = paramString (params["visibility_matrix_topic_post"]);
 	string targetPoseTopic = paramString (params["target_pose_topic"]);
 	string probabilityTopic = paramString (params["probability_topic"]);
+	string totalAreaTopic = paramString (params["total_area_topic"]);
 
 	visibilityMatrixSubs.resize (lossProbability.getAgentsNo ());
 
@@ -31,6 +32,7 @@ void LossProbabilityNode::initROS ()
 	targetPoseSub = nh.subscribe (targetPoseTopic, 1, &LossProbabilityNode::targetPoseCallback, this);
 	probabilityPub = nh.advertise<std_msgs::Float64> (probabilityTopic, 1);
 	matrixPub = nh.advertise<nav_msgs::OccupancyGrid> ("total_view", 1);
+	totalAreaPub = nh.advertise<std_msgs::Float64> (totalAreaTopic, 1);
 }
 
 void LossProbabilityNode::publishRviz (const VisibilityMatrix &matrix)
@@ -60,11 +62,14 @@ void LossProbabilityNode::targetPoseCallback (const nav_msgs::Odometry &newPose)
 int LossProbabilityNode::actions ()
 {
 	if (lossProbability.isReady ()) {
-		std_msgs::Float64 probMsg;
+		std_msgs::Float64 probMsg, totalMsg;
 
 		probMsg.data = lossProbability.compute ();
+		totalMsg.data = lossProbability.computeTotalArea ();
+
 
 		probabilityPub.publish (probMsg);
+		totalAreaPub.publish (totalMsg);
 		publishRviz (lossProbability.getTotalView ());
 	}
 

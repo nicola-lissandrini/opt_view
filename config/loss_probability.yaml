@@ -4,7 +4,7 @@ loss_probability:
   visibility_matrix_topic_post: /visibility_matrix
   probability_topic: target_loss_probability
   target_pose_topic: /target/odometry
-
+  total_area_topic: total_area
   agents_no: 5
   prediction_interval: 0.2
   prior:
@@ -15,5 +15,5 @@ loss_probability:
             0, 0, 0, 1]
   kalman_model:
     sample_time: 0.01
-    beta: 50
+    beta: 70
     sigma: 0.1

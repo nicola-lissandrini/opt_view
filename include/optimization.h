@@ -15,6 +15,7 @@
 struct OptimizationResults {
 	int imbalanceFactor;
 	double optimizationStep;
+	double totalArea;
 };
 
 class Optimization
@@ -22,7 +23,7 @@ class Optimization
 	Eigen::Isometry2d cameraPose;
 	VisibilityMatrix selfVisibility, neighborVisibility;
 	VisibilityMatrix totalVisibility, overlappingVisibility;
-	double lossProbability;
+	double lossProbability, totalArea;
 
 	ReadyFlags<std::string> flags;
 	struct Params {
@@ -83,6 +84,7 @@ class OptimizationNode : public PdRosNode
 	ros::Publisher rotationStepPub;
 	ros::Publisher rvizPub;
 	ros::Publisher imbalancePub;
+	ros::Publisher totalAreaPub;
 	Optimization optimization;
 	int agentId, neighborId;
 	bool doPublishRviz;

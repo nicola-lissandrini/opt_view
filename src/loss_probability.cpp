@@ -157,6 +157,18 @@ double LossProbability::compute ()
 	return probability;
 }
 
+double LossProbability::computeTotalArea()
+{
+	Region region = totalView.getRegion ();
+	double totalArea = 0;
+
+	for (int i = 0; i < totalView.count (); i++) {
+		totalArea += region.cellSize;
+	}
+
+	return totalArea;
+}
+
 bool LossProbability::isReady() {
 	return flags.isReady ();
 }

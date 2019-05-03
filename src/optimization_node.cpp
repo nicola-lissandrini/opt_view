@@ -43,7 +43,7 @@ void OptimizationNode::initROS ()
 	cameraOdomSub = nh.subscribe (topicPre + agentIdStr + cameraTopicPost, 1, &OptimizationNode::cameraOdomCallback, this);
 	lossProbabilitySub = nh.subscribe (lossProbabilityTopic, 1, &OptimizationNode::lossProbabilityCallback, this);
 	rotationStepPub = nh.advertise<opt_view::MultiagentPose> (rotationTopic, 1);
-	imbalancePub = nh.advertise<std_msgs::Int64> (imbalanceTopic, 1);
+	imbalancePub = nh.advertise<std_msgs::Float64> (imbalanceTopic, 1);
 	rvizPub = nh.advertise<nav_msgs::OccupancyGrid> (rvizTopic, 1);
 }
 
@@ -80,7 +80,7 @@ void OptimizationNode::publishRviz (const VisibilityMatrix &matrix)
 
 void OptimizationNode::publishImbalanceFactor ()
 {
-	std_msgs::Int64 imbalanceMsg;
+	std_msgs::Float64 imbalanceMsg;
 	imbalanceMsg.data = optimization.getResults ().imbalanceFactor;
 	imbalancePub.publish (imbalanceMsg);
 }

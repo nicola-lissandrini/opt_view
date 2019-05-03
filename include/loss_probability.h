@@ -34,6 +34,7 @@ public:
 	void updateVisibility (const opt_view::SparseMatrixInt &matrixMsg);
 	int getAgentsNo ();
 	double compute();
+	double computeTotalArea ();
 	
 	bool isReady ();
 	void updateTargetPose(const Eigen::Isometry3d &newPose, const Eigen::Vector2d &vel);
@@ -51,6 +52,7 @@ class LossProbabilityNode: public PdRosNode
 	std::vector<ros::Subscriber> visibilityMatrixSubs;
 	ros::Subscriber targetPoseSub;
 	ros::Publisher probabilityPub;
+	ros::Publisher totalAreaPub;
 	ros::Publisher matrixPub;
 
 	LossProbability lossProbability;
