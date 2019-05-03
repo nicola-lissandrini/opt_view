@@ -36,12 +36,12 @@ void OptimizationNode::initROS ()
 	string rotationTopic = paramString (params["rotation_topic"]);
 	string rvizTopic = paramString (params["rviz_topic"]);
 	string imbalanceTopic = paramString (params["imbalance_topic"]);
-	//string lossProbabilityTopic = paramString (params["loss_probability_topic"]);
+	string lossProbabilityTopic = paramString (params["loss_probability_topic"]);
 
 	selfMatrixSub = nh.subscribe (topicPre + agentIdStr + matrixTopicPost, 1, &OptimizationNode::selfMatrixCallback, this);
 	neighborMatrixSub = nh.subscribe (topicPre + neighborIdStr + matrixTopicPost, 1, &OptimizationNode::neighborMatrixCallback, this);
 	cameraOdomSub = nh.subscribe (topicPre + agentIdStr + cameraTopicPost, 1, &OptimizationNode::cameraOdomCallback, this);
-//	lossProbabilitySub = nh.subscribe (lossProbabilityTopic, 1, &OptimizationNode::lossProbabilityCallback, this);
+	lossProbabilitySub = nh.subscribe (lossProbabilityTopic, 1, &OptimizationNode::lossProbabilityCallback, this);
 	rotationStepPub = nh.advertise<opt_view::MultiagentPose> (rotationTopic, 1);
 	imbalancePub = nh.advertise<std_msgs::Int64> (imbalanceTopic, 1);
 	rvizPub = nh.advertise<nav_msgs::OccupancyGrid> (rvizTopic, 1);

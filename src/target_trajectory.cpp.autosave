@@ -108,6 +108,8 @@ void TargetTrajectory::OnUpdate ()
 						   0),
 				 Quaterniond::Identity);
 	model->SetRelativePose (newPose);
+	
+	model->GetWorld ()->
 }
 
 

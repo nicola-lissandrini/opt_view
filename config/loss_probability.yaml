@@ -6,7 +6,7 @@ loss_probability:
   target_pose_topic: /target/odometry
 
   agents_no: 5
-  prediction_interval: 0.5
+  prediction_interval: 0.2
   prior:
     state: [1, 0, 0, 0]
     error: [1, 0, 0, 0,

@@ -24,7 +24,7 @@ traj{1}(:,2) = 0 * t1;
 
 % Linear part
 
-t2 = 0:sample_time:0.1;
+t2 = 0:sample_time:3;
 
 traj{2}(:,1) = v * t2;
 traj{2}(:,2) = 0 * t2;

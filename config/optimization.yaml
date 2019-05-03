@@ -9,5 +9,5 @@ optimization:
   loss_probability_topic: /uavs/agent_0/target_loss_probability
   rviz_publish: false
   angle_step: 0.01
-  proportional_gain: 0.016
-  loss_probability_gain: 1.0
+  proportional_gain: 0.015
+  loss_probability_gain: 0.6
